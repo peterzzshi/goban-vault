@@ -1,8 +1,8 @@
 import './App.css'
-import GobanVault from './components/GobanVault'
+import { GobanVaultApp } from './components/GobanVaultApp'
 
 function App() {
-  return <GobanVault />
+  return <GobanVaultApp />
 }
 
 export default App
