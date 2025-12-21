@@ -1,5 +1,5 @@
 import type { Board, Quadrant, Position } from './types';
-import { assignColorsWithValidity } from './colorAssigner';
+import { assignColorsWithValidity } from './colourAssigner.ts';
 import { keyHash } from '../utils/keyConverter';
 import {
     BOARD_SIZE,

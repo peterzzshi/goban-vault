@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Unlock, RefreshCw } from 'lucide-react';
 import type { EncodedResult, DecodedResult } from '../core/types';
 import { binaryToHex } from '../utils/keyConverter';
-import {HEX_DISPLAY_BITS} from "../utils/constants.ts";
+import { HEX_DISPLAY_BITS } from '../utils/constants';
 
 interface DecodingPanelProps {
   encodedBoard: EncodedResult;
@@ -11,6 +11,15 @@ interface DecodingPanelProps {
 }
 
 export const DecodingPanel: React.FC<DecodingPanelProps> = ({ encodedBoard, decodedKey, onDecode }) => {
+  const originalKeyHex = useMemo(
+    () => binaryToHex(encodedBoard.keyBits, 64),
+    [encodedBoard.keyBits]
+  );
+
+  const matchStatusClass = decodedKey?.matches
+    ? 'bg-linear-to-r from-green-100 via-emerald-50 to-teal-100 border-green-400'
+    : 'bg-linear-to-r from-red-100 via-pink-50 to-orange-100 border-red-400';
+
   return (
     <div className="bg-linear-to-br from-cyan-50 via-white to-indigo-50 rounded-2xl p-8 shadow-2xl border-2 border-cyan-200">
       <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
@@ -27,11 +36,7 @@ export const DecodingPanel: React.FC<DecodingPanelProps> = ({ encodedBoard, deco
 
       {decodedKey && (
         <div className="space-y-4">
-          <div
-            className={`p-6 rounded-2xl border-2 shadow-lg ${
-              decodedKey.matches ? 'bg-linear-to-r from-green-100 via-emerald-50 to-teal-100 border-green-400' : 'bg-linear-to-r from-red-100 via-pink-50 to-orange-100 border-red-400'
-            }`}
-          >
+          <div className={`p-6 rounded-2xl border-2 shadow-lg ${matchStatusClass}`}>
             <div className="font-bold text-lg mb-2 text-slate-800">
               {decodedKey.matches ? '✓ Perfect Match!' : '✗ Mismatch'}
             </div>
@@ -46,7 +51,7 @@ export const DecodingPanel: React.FC<DecodingPanelProps> = ({ encodedBoard, deco
             <div className="bg-linear-to-br from-purple-100 via-pink-50 to-blue-100 p-5 rounded-2xl border-2 border-purple-300 shadow-md">
               <div className="text-sm font-semibold text-slate-700 mb-2">Original Key (hex)</div>
               <code className="text-xs text-slate-600 break-all block bg-white p-3 rounded-xl shadow-inner">
-                {binaryToHex(encodedBoard.keyBits, 64)}...
+                {originalKeyHex}...
               </code>
             </div>
             <div className="bg-linear-to-br from-blue-100 via-cyan-50 to-indigo-100 p-5 rounded-2xl border-2 border-blue-300 shadow-md">
