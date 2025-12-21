@@ -1,6 +1,6 @@
 import type { EncodedResult, DecodedResult } from './types';
 import { binaryToHex } from '../utils/keyConverter';
-import { TOTAL_BITS, EMPTY } from '../utils/constants';
+import {TOTAL_BITS, EMPTY, HEX_DISPLAY_BITS} from '../utils/constants';
 
 /**
  * Decode board back to key
@@ -23,7 +23,8 @@ export const decodeBoard = (encodedBoard: EncodedResult): DecodedResult => {
 
   return {
     bits: decodedBits,
-    hex: binaryToHex(decodedBits, 64) + '...',
+    // Show first 64 bits (16 hex chars) for display, append "..." to indicate truncation
+    hex: binaryToHex(decodedBits, HEX_DISPLAY_BITS) + '...',
     matches: decodedBits === keyBits
   };
 };

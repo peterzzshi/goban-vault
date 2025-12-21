@@ -2,6 +2,7 @@ import React from 'react';
 import { Unlock, RefreshCw } from 'lucide-react';
 import type { EncodedResult, DecodedResult } from '../core/types';
 import { binaryToHex } from '../utils/keyConverter';
+import {HEX_DISPLAY_BITS} from "../utils/constants.ts";
 
 interface DecodingPanelProps {
   encodedBoard: EncodedResult;
@@ -49,7 +50,9 @@ export const DecodingPanel: React.FC<DecodingPanelProps> = ({ encodedBoard, deco
               </code>
             </div>
             <div className="bg-slate-50 p-4 rounded">
-              <div className="text-sm font-medium text-slate-700 mb-2">Decoded Key (hex)</div>
+              <div className="text-sm font-medium text-slate-700 mb-2">
+                Decoded Key (hex, first {HEX_DISPLAY_BITS} bits)
+              </div>
               <code className="text-xs text-slate-600 break-all">{decodedKey.hex}</code>
             </div>
           </div>

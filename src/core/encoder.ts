@@ -2,10 +2,10 @@ import type { Board, Quadrant, Position } from './types';
 import { assignColorsWithValidity } from './colorAssigner';
 import { keyHash } from '../utils/keyConverter';
 import {
-  BOARD_SIZE,
-  BITS_PER_QUADRANT,
-  EMPTY,
-  DUMMY_STONE_PROBABILITY
+    BOARD_SIZE,
+    BITS_PER_QUADRANT,
+    EMPTY,
+    DUMMY_STONE_PROBABILITY, HASH_MULTIPLIER, ROW_MULTIPLIER, COL_MULTIPLIER, QUADRANT_MULTIPLIER
 } from '../utils/constants';
 
 type StoneInfo = [number, number, number, boolean]; // [row, col, baseColor, isDummy]
@@ -122,8 +122,13 @@ export const encodeWithDummyStones = (
     // Place dummy stones (remaining positions)
     for (let i = BITS_PER_QUADRANT; i < quadPositions.length; i++) {
       const [r, c] = quadPositions[i];
-      // Deterministic pseudo-random placement
-      const shouldPlace = ((hashValue * 7 + r * 11 + c * 13 + qIdx * 17) % 100) < DUMMY_STONE_PROBABILITY;
+      // Deterministic pseudo-random placement using key hash and position
+      const shouldPlace = (
+        (hashValue * HASH_MULTIPLIER +
+         r * ROW_MULTIPLIER +
+         c * COL_MULTIPLIER +
+         qIdx * QUADRANT_MULTIPLIER) % 100
+      ) < DUMMY_STONE_PROBABILITY;
 
       if (shouldPlace) {
         board[r][c] = mixColors ? -1 : quad.baseColor;

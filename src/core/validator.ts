@@ -97,6 +97,7 @@ export const verifyBoard = (board: Board, size: number): ValidationResult => {
 
 /**
  * Check if a stone can be placed safely at a position
+ * Temporarily places the stone, checks for liberties, then restores original state
  */
 export const canPlaceSafely = (
   board: Board,
@@ -105,10 +106,11 @@ export const canPlaceSafely = (
   color: number,
   size: number
 ): boolean => {
+  const originalValue = board[row][col];
   board[row][col] = color;
   const visited = Array(size).fill(null).map(() => Array(size).fill(false));
   const safe = checkGroupLiberties(board, visited, row, col, color, size);
-  board[row][col] = -1;
+  board[row][col] = originalValue; // Restore original state
   return safe;
 };
 

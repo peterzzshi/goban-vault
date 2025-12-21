@@ -73,7 +73,7 @@ export const GoBoard: React.FC<GoBoardProps> = ({ board, size, centerRow, center
         {/* Stones */}
         {board.map((row, i) =>
           row.map((cell, j) => {
-            if (cell === EMPTY || cell === -1) return null;
+            if (cell === EMPTY) return null;
             return (
               <g key={`stone-${i}-${j}`}>
                 <circle

@@ -1,6 +1,13 @@
 import type { Board } from './types';
 import { canPlaceSafely } from './validator';
-import { BLACK, WHITE, EMPTY } from '../utils/constants';
+import {
+    BLACK,
+    WHITE,
+    EMPTY,
+    COLOR_VARIATION_ROW_FACTOR,
+    COLOR_VARIATION_COL_FACTOR,
+    COLOR_VARIATION_THRESHOLD, COLOR_VARIATION_FLIP_THRESHOLD
+} from '../utils/constants';
 
 type StoneInfo = [number, number, number, boolean]; // [row, col, baseColor, isDummy]
 
@@ -42,9 +49,14 @@ export const assignColorsWithValidity = (
 
     // Assign color based on neighbors and safety
     if (neighborInfo.empty >= 2) {
-      // Safe - vary color more frequently for natural appearance
-      const variation = (row * 7 + col * 11) % 5;
-      if (variation < 2 && !isDummy) {
+      // Safe - vary color for natural appearance using position-based pattern
+      const variation = (
+        row * COLOR_VARIATION_ROW_FACTOR +
+        col * COLOR_VARIATION_COL_FACTOR
+      ) % COLOR_VARIATION_THRESHOLD;
+
+      // Flip color for some positions to create natural distribution
+      if (variation < COLOR_VARIATION_FLIP_THRESHOLD && !isDummy) {
         board[row][col] = baseColor === BLACK ? WHITE : BLACK;
       } else {
         board[row][col] = baseColor;
