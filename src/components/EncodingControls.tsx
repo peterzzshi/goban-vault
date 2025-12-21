@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Sparkles, Info } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 
 interface EncodingControlsProps {
   onEncode: (mixColors: boolean) => void;
@@ -7,37 +7,36 @@ interface EncodingControlsProps {
 
 export const EncodingControls: React.FC<EncodingControlsProps> = ({ onEncode }) => {
   return (
-    <div className="bg-white rounded-lg p-6 mb-6 shadow">
-      <div className="flex items-start gap-3 mb-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-        <Info className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-slate-700">
-          <strong>Natural Filling Strategy:</strong> Each quadrant uses its first 64 positions for real data.
-          The remaining positions (last ~17 per quadrant) are filled with deterministic pseudo-random "dummy" stones
-          based on the key hash. This eliminates obvious empty patterns while keeping decoding simple: just read the
-          first 64 positions of each quadrant and ignore the rest!
-        </div>
-      </div>
+    <div className="bg-linear-to-br from-indigo-50 via-white to-pink-50 rounded-2xl p-8 mb-6 shadow-xl border-2 border-indigo-200">
+      <h3 className="text-lg font-semibold text-slate-800 mb-4">Choose Encoding Mode</h3>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => onEncode(false)}
-          className="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          className="group relative overflow-hidden bg-linear-to-br from-teal-500 via-cyan-500 to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white font-semibold py-5 px-6 rounded-2xl transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105"
         >
-          <div className="flex items-center justify-center gap-2">
-            <Lock className="w-5 h-5" />
-            <span>Fixed Colors</span>
+          <div className="relative z-10">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Lock className="w-6 h-6" />
+              <span className="text-lg">Fixed Colours</span>
+            </div>
+            <div className="text-xs opacity-90">+ Natural dummy stones</div>
           </div>
-          <div className="text-xs opacity-90 mt-1">+ Natural dummy stones</div>
+          <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
         </button>
+
         <button
           onClick={() => onEncode(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          className="group relative overflow-hidden bg-linear-to-br from-emerald-500 via-green-500 to-green-700 hover:from-emerald-600 hover:to-green-800 text-white font-semibold py-5 px-6 rounded-2xl transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105"
         >
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="w-5 h-5" />
-            <span>Mixed Colors</span>
+          <div className="relative z-10">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Sparkles className="w-6 h-6" />
+              <span className="text-lg">Mixed Colours</span>
+            </div>
+            <div className="text-xs opacity-90">+ Natural dummy stones</div>
           </div>
-          <div className="text-xs opacity-90 mt-1">+ Natural dummy stones</div>
+          <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
         </button>
       </div>
     </div>
