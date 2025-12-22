@@ -1,53 +1,74 @@
 import { TOTAL_BITS } from './constants';
 
 /**
- * Convert various input formats to binary string
+ * Pad or truncate binary string to exact length
  */
-export const keyToBinary = (input: string): string => {
-  let keyBits: string;
+const normalizeBinaryLength = (binary: string, length: number): string =>
+  binary.padEnd(length, '0').slice(0, length);
 
-  // Binary input
-  if (input.match(/^[01]+$/)) {
-    keyBits = input.padEnd(TOTAL_BITS, '0').slice(0, TOTAL_BITS);
-  }
-  // Hex input
-  else if (input.match(/^[0-9a-fA-F]+$/)) {
-    keyBits = input
-      .split('')
-      .map(h => parseInt(h, 16).toString(2).padStart(4, '0'))
-      .join('')
-      .padEnd(TOTAL_BITS, '0')
-      .slice(0, TOTAL_BITS);
-  }
-  // Text input - convert to hash
-  else {
-    let hash = 0;
-    for (let i = 0; i < input.length; i++) {
-      hash = ((hash << 5) - hash) + input.charCodeAt(i);
-      hash = hash & hash;
-    }
-    keyBits = Math.abs(hash).toString(2).padEnd(TOTAL_BITS, '0').slice(0, TOTAL_BITS);
-  }
+/**
+ * Convert hex character to binary (4 bits)
+ */
+const hexToBinary = (hexChar: string): string =>
+  parseInt(hexChar, 16).toString(2).padStart(4, '0');
 
-  return keyBits;
+/**
+ * Hash text to number using DJB2 algorithm
+ * Returns unsigned 32-bit integer
+ *
+ * Note: Uses >>> 0 to ensure unsigned conversion (differs from original implementation
+ * which used hash & hash). This produces different hash values than the old version.
+ */
+const hashText = (text: string): number =>
+  text.split('').reduce(
+    (hash, char) => (((hash << 5) - hash) + char.charCodeAt(0)) >>> 0,
+    0
+  );
+
+/**
+ * Convert hex string to binary
+ */
+const hexStringToBinary = (hex: string): string =>
+  hex.split('').map(hexToBinary).join('');
+
+/**
+ * Convert text to binary via hashing
+ */
+const textToBinary = (text: string): string =>
+  hashText(text).toString(2);
+
+/**
+ * Detect input type and convert to binary
+ * Supports: binary (01), hex (0-9a-f), or text (hashed)
+ */
+const detectAndConvert = (input: string): string => {
+  if (/^[01]+$/.test(input)) return input;
+  if (/^[0-9a-fA-F]+$/.test(input)) return hexStringToBinary(input);
+  return textToBinary(input);
 };
 
 /**
+ * Convert various input formats to 256-bit binary string
+ */
+export const keyToBinary = (input: string): string =>
+  normalizeBinaryLength(detectAndConvert(input), TOTAL_BITS);
+
+/**
  * Convert binary string to hex representation
- *
- * @param binary - Binary string to convert
- * @param length - Number of bits to convert (default: 64)
- * @returns Hex string with proper padding
  */
 export const binaryToHex = (binary: string, length: number = 64): string => {
-  const hexLength = Math.ceil(length / 4); // Each hex char = 4 bits
-  return parseInt(binary.slice(0, length), 2).toString(16).padStart(hexLength, '0');
+  const hexLength = Math.ceil(length / 4);
+  const trimmedBinary = binary.slice(0, length);
+  return parseInt(trimmedBinary, 2).toString(16).padStart(hexLength, '0');
 };
 
 /**
  * Generate deterministic hash from binary string
+ * Uses modulo to prevent overflow for long bit strings
  */
-export const keyHash = (keyBits: string): number => {
-  return keyBits.split('').reduce((acc, bit, idx) => acc + parseInt(bit) * (idx + 1), 0);
-};
+export const keyHash = (keyBits: string): number =>
+  keyBits.split('').reduce(
+    (acc, bit, idx) => (acc + parseInt(bit, 10) * (idx + 1)) % Number.MAX_SAFE_INTEGER,
+    0
+  );
 

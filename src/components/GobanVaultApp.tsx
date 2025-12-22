@@ -39,7 +39,7 @@ export const GobanVaultApp: React.FC = () => {
         keyBits,
         verification: phantomVerification,
         size: BOARD_SIZE,
-        mixColors: false
+        mixColours: false
       };
 
       // Encode Real Go (Mixed Colours - adds black stones for realness)
@@ -50,7 +50,7 @@ export const GobanVaultApp: React.FC = () => {
         keyBits,
         verification: realVerification,
         size: BOARD_SIZE,
-        mixColors: true
+        mixColours: true
       };
 
       // Batch state updates together

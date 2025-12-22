@@ -1,161 +1,157 @@
 # Goban Vault
 
-A cryptographic key encoder/decoder using Go (Baduk/Weiqi) board positions. This application encodes encryption keys as valid Go game positions on a 19×19 board, providing a unique steganographic approach to key storage.
+A novel approach to cryptographic key storage: encode encryption keys as valid Go (Baduk/Weiqi) board positions. Keys are hidden in plain sight as natural-looking game positions on a 19×19 board.
+
+## Motivation
+
+**Why hide keys in Go boards?**
+
+Traditional key storage methods (files, databases, password managers) are obvious targets. Goban Vault provides **steganographic security** - your 256-bit encryption key looks like an ordinary Go game position. An observer sees a plausible board state, not encrypted data.
+
+**Use Cases:**
+- 🔐 **Plausible deniability** - Store keys in images of Go games
+- 🎭 **Steganography** - Embed keys in public Go game databases
+- 📚 **Physical backup** - Print Go boards on paper (survives digital threats)
+- 🧠 **Memorable storage** - Visual patterns are easier to remember than hex strings
+- 🎨 **Covert communication** - Share keys disguised as game positions
 
 ## Features
 
 - 🔐 Encode 256-bit keys as valid Go board positions
-- 🎲 Natural stone placement with dummy stones for authenticity
-- ✅ Validation of Go game rules (no captured groups)
-- 🔄 Decode keys from board positions
-- 🎨 Visual board representation with realistic stone rendering
-- 🌈 Support for both fixed and mixed color encoding modes
-
-## Tech Stack
-
-- React 19 + TypeScript
-- Vite for build tooling
-- Lucide React for icons
-- Tailwind CSS for styling
-
-## Getting Started
-
-### Installation
-
-```bash
-npm install
-```
-
-### Development
-
-```bash
-npm run dev
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-### Preview Production Build
-
-```bash
-npm run preview
-```
+- 👻 **Phantom Go → Real Go**: Progressive encoding from uniform (white) to natural (mixed colours)
+- ✅ All positions follow Go rules (no captured groups)
+- 🔄 Perfect decoding - recovers original key exactly
+- 🎲 Deterministic dummy stones for natural appearance
 
 ## How It Works
 
-### Encoding Process
+### The Encoding Concept
 
-The encoding process transforms a 256-bit key into a natural-looking Go board position:
+1. **256 bits = 4 quadrants × 64 bits**
+   - The 19×19 board is divided into 4 quadrants (9×9 each) by center lines
+   - Each quadrant encodes 64 bits in its first 64 positions (row-by-row)
 
-1. **Key Input**: Enter your key in hex, binary, or plain text format
-2. **Quadrant Division**: The 19×19 board is divided into 4 quadrants by the center lines (row/col 9)
-3. **Data Placement**: Each quadrant encodes 64 bits in its first 64 positions (reading row-by-row, left-to-right)
-4. **Dummy Stone Filling**: Remaining ~17 positions per quadrant are filled with deterministic pseudo-random "dummy" stones
-5. **Validation**: All stone placements are validated to ensure they follow Go rules (no captured groups)
+2. **Stone Placement = Data**
+   - Stone present = `1`, empty = `0`
+   - Position matters, colour doesn't (for decoding)
 
-### Natural Filling Strategy
+3. **Dummy Stones = Natural Appearance**
+   - Each quadrant has 81 positions, but only uses 64 for data
+   - Remaining 17 positions filled with deterministic "dummy" stones
+   - Makes the board look like a real game, not a data structure
 
-**Why Dummy Stones?**
-- Each quadrant has 81 positions (9×9) but only needs 64 for data
-- The remaining 17 positions would create obvious empty patterns
-- Dummy stones fill these gaps to make the board look like a real game
+### Phantom Go → Real Go
 
-**How Dummy Stones Work:**
-- **Deterministic**: Based on key hash, so same key → same dummy pattern
-- **Pseudo-random**: Placement uses hash-based calculations (~40% density)
-- **Rule-compliant**: All dummy stones respect Go rules (maintain liberties)
-- **Ignorable**: Decoder reads only first 64 positions per quadrant
+The app shows the encoding progression:
 
-### Decoding Algorithm
+**👻 Phantom Go (Step 1)**
+- All stones are white (uniform appearance)
+- Shows the basic stone placement pattern
+- Simple, "phantom-like" look
 
-Extracting the original key is simple and elegant:
+**✨ Real Go (Step 2)**
+- Mixed black and white stones
+- Position-based colour variation for natural distribution
+- Looks like an actual game in progress
+
+### Decoding
+
+Extracting the key is simple:
 
 1. Identify the 4 quadrants (separated by center row/col 9)
-2. For each quadrant, read **ONLY the first 64 positions**
-3. Read order: row-by-row, left-to-right within each quadrant
-4. Ignore all stones beyond position 64 (dummy stones)
-5. Stone present = `1`, empty = `0` (color is irrelevant!)
-6. Concatenate: `TL(64) + TR(64) + BL(64) + BR(64) = 256 bits`
+2. For each quadrant, read **ONLY the first 64 positions** (row-by-row)
+3. Stone present = `1`, empty = `0`
+4. Ignore positions 65-81 (dummy stones)
+5. Concatenate: `TL + TR + BL + BR = 256 bits`
 
-**💡 Key Insight:** Dummy stones are reproducible but not needed for decoding—they just make the board look natural!
+**Key insight:** Dummy stones are deterministic but not needed for decoding!
 
-### Encoding Modes
+## Quick Start
 
-**Fixed Colors Mode:**
-- Data stones: Predetermined color assignment
-- Creates consistent, predictable patterns
-- Simpler encoding logic
+```bash
+# Install dependencies
+npm install
 
-**Mixed Colors Mode:**
-- Data stones: Hash-based color variation
-- Creates more organic, natural-looking distributions
-- Better visual authenticity
+# Run development server
+npm run dev
 
-### Perfect Natural Encoding Achievements
+# Build for production
+npm run build
+```
 
-✓ **Deterministic encoding** - Same key always produces the same board  
-✓ **256-bit capacity** - 64 bits per quadrant × 4 quadrants  
-✓ **Valid Go rules** - All stones have liberties, no captures  
-✓ **Natural appearance** - No obvious empty patterns or structures  
-✓ **Even distribution** - Dummy stones fill gaps throughout the board  
-✓ **Mixed colors** - Organic color distribution (when enabled)  
-✓ **Perfect decoding** - Ignore dummy stones, read only data positions  
-✓ **Memorable structure** - Quadrant-based system is easy to understand  
+## Usage Example
+
+1. **Enter your key**: Hex, binary, or plain text
+2. **See both boards**: Phantom Go (white) and Real Go (natural colours)
+3. **Decode to verify**: Click "Decode Board → Key" to recover original
+
+## Technical Details
+
+### Key Properties
+
+✓ **Deterministic** - Same key always produces the same board  
+✓ **Capacity** - Full 256-bit encryption key support  
+✓ **Valid Go rules** - All stones have liberties (no captures)  
+✓ **Natural appearance** - Dummy stones eliminate obvious patterns  
+✓ **Perfect recovery** - Decoding is lossless  
+
+### Go Board Structure
+
+- **Board Size**: 19×19 (361 intersections)
+- **Quadrants**: 4 regions of 9×9 (81 positions each)
+- **Data positions**: First 64 per quadrant (256 total)
+- **Dummy positions**: Last ~17 per quadrant (fill gaps)
+
+### Key Formats Supported
+
+- **Hex**: `deadbeef1234...` (converted to binary)
+- **Binary**: `10110101...` (used directly)
+- **Text**: Any string (hashed to 256 bits)
+
+## Security Considerations
+
+**What Goban Vault provides:**
+- ✅ Steganographic concealment (keys look like games)
+- ✅ Plausible deniability (no obvious encrypted data)
+- ✅ Physical backup capability (printable boards)
+
+**What it does NOT provide:**
+- ❌ Encryption of the key itself (store securely!)
+- ❌ Authentication (anyone with the board can decode)
+- ❌ Protection against statistical analysis of multiple boards
+
+**Best practices:**
+- Combine with actual encryption for sensitive keys
+- Use unique keys (avoid reuse)
+- Store board images in legitimate game collections
+- Print boards for offline backup
 
 ## Project Structure
 
 ```
 goban-vault/
-├── README.md
-├── LICENSE
-├── package.json
-├── public/
-│   └── index.html
 ├── src/
-│   ├── components/
-│   │   ├── GoBoard.tsx          # Board visualization
-│   │   ├── KeyInput.tsx         # Key input component
-│   │   ├── EncodingControls.tsx # Encoding mode selection
-│   │   ├── BoardStats.tsx       # Board statistics display
-│   │   ├── DecodingPanel.tsx    # Decoding interface
-│   │   └── GobanVaultApp.tsx    # Main app component
-│   ├── core/
-│   │   ├── encoder.ts           # Core encoding logic
-│   │   ├── decoder.ts           # Core decoding logic
-│   │   ├── validator.ts         # Go rules validation
-│   │   ├── colorAssigner.ts     # Colour assignment algorithms
-│   │   └── types.ts             # TypeScript type definitions
-│   ├── utils/
-│   │   ├── keyConverter.ts      # Hex/binary/text conversion
-│   │   └── constants.ts         # Board size, patterns, etc.
-│   ├── App.tsx                  # App entry component
-│   ├── main.tsx                 # React entry point
-│   └── index.css                # Global styles
-├── docs/                        # Additional documentation
-└── ...config files
+│   ├── components/        # React UI components
+│   ├── core/             # Encoding/decoding logic
+│   │   ├── encoder.ts    # Key → Board transformation
+│   │   ├── decoder.ts    # Board → Key recovery
+│   │   ├── validator.ts  # Go rules validation
+│   │   └── colourAssigner.ts  # Natural colour distribution
+│   └── utils/            # Helper functions
+└── docs/                 # Additional documentation
 ```
 
-## Technical Details
+## Tech Stack
 
-### Go Board Basics
-- **Board Size**: 19×19 (361 intersections)
-- **Center Point**: Row/Col 9 (0-indexed)
-- **Quadrants**: 4 equal regions of 9×9 (81 positions each)
-- **Stone Colours**: Black (`1`) and White (`2`)
-
-### Key Conversion
-- **Hex Input**: Converted to binary (4 bits per character)
-- **Binary Input**: Used directly
-- **Text Input**: Hashed using DJB2-style hash to generate binary
-
-### Validation
-- **Liberty Check**: Each stone must have at least one adjacent empty intersection
-- **No Captures**: Board must not contain any surrounded groups
-- **Color Count**: Tracks black and white stone distribution
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS (via @tailwindcss/postcss v4)
 
 ## License
 
 MIT
+
+---
+
+**Note:** This is a research project exploring steganographic key storage. Use at your own risk for production systems.
+

@@ -1,19 +1,31 @@
 import type { Board, Quadrant, Position } from './types';
-import { assignColorsWithValidity } from './colourAssigner.ts';
+import { assignColoursWithValidity } from './colourAssigner';
 import { keyHash } from '../utils/keyConverter';
 import {
     BOARD_SIZE,
     BITS_PER_QUADRANT,
     EMPTY,
-    DUMMY_STONE_PROBABILITY, HASH_MULTIPLIER, ROW_MULTIPLIER, COL_MULTIPLIER, QUADRANT_MULTIPLIER
+    WHITE,
+    PENDING_COLOUR,
+    DUMMY_STONE_PROBABILITY,
+    HASH_MULTIPLIER,
+    ROW_MULTIPLIER,
+    COL_MULTIPLIER,
+    QUADRANT_MULTIPLIER
 } from '../utils/constants';
 
-type StoneInfo = [number, number, number, boolean]; // [row, col, baseColor, isDummy]
+type StoneInfo = readonly [number, number, number, boolean]; // [row, col, baseColour, isDummy]
+
+/**
+ * Create empty board
+ */
+const createEmptyBoard = (size: number): Board =>
+  Array.from({ length: size }, () => Array(size).fill(EMPTY));
 
 /**
  * Create the four quadrants of the Go board
  */
-const createQuadrants = (size: number): Quadrant[] => {
+const createQuadrants = (size: number): readonly Quadrant[] => {
   const centerRow = Math.floor(size / 2);
   const centerCol = Math.floor(size / 2);
 
@@ -24,7 +36,7 @@ const createQuadrants = (size: number): Quadrant[] => {
       endRow: centerRow - 1,
       startCol: 0,
       endCol: centerCol - 1,
-      baseColor: 1
+      baseColour: 1
     },
     {
       name: 'Top-Right',
@@ -32,7 +44,7 @@ const createQuadrants = (size: number): Quadrant[] => {
       endRow: centerRow - 1,
       startCol: centerCol + 1,
       endCol: size - 1,
-      baseColor: 2
+      baseColour: 2
     },
     {
       name: 'Bottom-Left',
@@ -40,7 +52,7 @@ const createQuadrants = (size: number): Quadrant[] => {
       endRow: size - 1,
       startCol: 0,
       endCol: centerCol - 1,
-      baseColor: 2
+      baseColour: 2
     },
     {
       name: 'Bottom-Right',
@@ -48,99 +60,187 @@ const createQuadrants = (size: number): Quadrant[] => {
       endRow: size - 1,
       startCol: centerCol + 1,
       endCol: size - 1,
-      baseColor: 1
+      baseColour: 1
     }
-  ];
+  ] as const;
 };
 
 /**
  * Get all positions in a quadrant (row by row)
  */
-const getQuadrantPositions = (quad: Quadrant): [number, number][] => {
-  const positions: [number, number][] = [];
+const getQuadrantPositions = (quad: Quadrant): readonly (readonly [number, number])[] => {
+  const positions: (readonly [number, number])[] = [];
   for (let r = quad.startRow; r <= quad.endRow; r++) {
     for (let c = quad.startCol; c <= quad.endCol; c++) {
-      positions.push([r, c]);
+      positions.push([r, c] as const);
     }
   }
   return positions;
 };
 
 /**
+ * Get bits for a specific quadrant
+ */
+const getQuadrantBits = (keyBits: string, quadrantIndex: number): string => {
+  const startBit = quadrantIndex * BITS_PER_QUADRANT;
+  const endBit = Math.min(startBit + BITS_PER_QUADRANT, keyBits.length);
+
+  if (startBit >= keyBits.length) {
+    return '0'.repeat(BITS_PER_QUADRANT);
+  }
+
+  return keyBits.slice(startBit, endBit).padEnd(BITS_PER_QUADRANT, '0');
+};
+
+/**
+ * Determine if dummy stone should be placed
+ */
+const shouldPlaceDummyStone = (
+  hashValue: number,
+  row: number,
+  col: number,
+  quadrantIndex: number
+): boolean => {
+  const pseudoRandom = (
+    hashValue * HASH_MULTIPLIER +
+    row * ROW_MULTIPLIER +
+    col * COL_MULTIPLIER +
+    quadrantIndex * QUADRANT_MULTIPLIER
+  ) % 100;
+
+  return pseudoRandom < DUMMY_STONE_PROBABILITY;
+};
+
+/**
+ * Create reading order for data stones
+ */
+const createDataStonePositions = (
+  quadrant: Quadrant,
+  positions: readonly (readonly [number, number])[]
+): readonly Position[] => {
+  const dataPositions: Position[] = [];
+
+  for (let i = 0; i < BITS_PER_QUADRANT && i < positions.length; i++) {
+    const [r, c] = positions[i];
+    dataPositions.push({
+      pos: [r, c] as const,
+      quadrant: quadrant.name,
+      baseColour: quadrant.baseColour,
+      isDummy: false
+    });
+  }
+
+  return dataPositions;
+};
+
+/**
+ * Create stones to place for data bits
+ */
+const createDataStones = (
+  quadBits: string,
+  positions: readonly (readonly [number, number])[],
+  baseColour: number
+): readonly StoneInfo[] => {
+  const stones: StoneInfo[] = [];
+
+  for (let i = 0; i < BITS_PER_QUADRANT && i < positions.length; i++) {
+    if (quadBits[i] === '1') {
+      const [r, c] = positions[i];
+      stones.push([r, c, baseColour, false] as const);
+    }
+  }
+
+  return stones;
+};
+
+/**
+ * Create dummy stones for remaining positions
+ */
+const createDummyStones = (
+  positions: readonly (readonly [number, number])[],
+  baseColour: number,
+  hashValue: number,
+  quadrantIndex: number
+): readonly StoneInfo[] => {
+  const dummyStones: StoneInfo[] = [];
+
+  for (let i = BITS_PER_QUADRANT; i < positions.length; i++) {
+    const [r, c] = positions[i];
+    if (shouldPlaceDummyStone(hashValue, r, c, quadrantIndex)) {
+      dummyStones.push([r, c, baseColour, true] as const);
+    }
+  }
+
+  return dummyStones;
+};
+
+/**
+ * Process a single quadrant
+ */
+const processQuadrant = (
+  quadrant: Quadrant,
+  quadrantIndex: number,
+  keyBits: string,
+  hashValue: number
+): {
+  readonly readingOrder: readonly Position[];
+  readonly stones: readonly StoneInfo[];
+  readonly dummyCount: number;
+} => {
+  const positions = getQuadrantPositions(quadrant);
+  const quadBits = getQuadrantBits(keyBits, quadrantIndex);
+
+  const readingOrder = createDataStonePositions(quadrant, positions);
+  const dataStones = createDataStones(quadBits, positions, quadrant.baseColour);
+  const dummyStones = createDummyStones(positions, quadrant.baseColour, hashValue, quadrantIndex);
+
+  return {
+    readingOrder,
+    stones: [...dataStones, ...dummyStones],
+    dummyCount: dummyStones.length
+  };
+};
+
+/**
  * Encode key bits with natural filling including dummy stones
+ *
+ * @param keyBits - 256-bit binary string to encode
+ * @param size - Board size (default: 19)
+ * @param mixColours - If true, applies colour variation; if false, uses all white stones
+ * @returns Encoded board with metadata
+ *
+ * Note: assignColoursWithValidity always finds valid placements that follow Go rules.
+ * It adjusts colours as needed to ensure no captured groups exist.
  */
 export const encodeWithDummyStones = (
   keyBits: string,
   size: number = BOARD_SIZE,
-  mixColors: boolean = false
+  mixColours: boolean = false
 ) => {
-  const board: Board = Array(size).fill(null).map(() => Array(size).fill(EMPTY));
+  const board = createEmptyBoard(size);
   const centerRow = Math.floor(size / 2);
   const centerCol = Math.floor(size / 2);
-
   const quadrants = createQuadrants(size);
-  const readingOrder: Position[] = [];
-  const stonesToPlace: StoneInfo[] = [];
-  const dummyPositions = new Set<string>();
-
-  // Calculate key hash for deterministic dummy placement
   const hashValue = keyHash(keyBits);
 
-  // Process each quadrant
-  for (let qIdx = 0; qIdx < quadrants.length; qIdx++) {
-    const quad = quadrants[qIdx];
-    const quadPositions = getQuadrantPositions(quad);
+  const quadrantResults = quadrants.map((quad, idx) =>
+    processQuadrant(quad, idx, keyBits, hashValue)
+  );
 
-    // Get bits for this quadrant
-    const startBit = qIdx * BITS_PER_QUADRANT;
-    const endBit = Math.min(startBit + BITS_PER_QUADRANT, keyBits.length);
-    let quadBits = '';
+  const readingOrder = quadrantResults.flatMap(r => r.readingOrder);
+  const allStones = quadrantResults.flatMap(r => r.stones);
+  const totalDummyCount = quadrantResults.reduce((sum, r) => sum + r.dummyCount, 0);
 
-    if (startBit < keyBits.length) {
-      quadBits = keyBits.slice(startBit, endBit);
-      quadBits = quadBits.padEnd(BITS_PER_QUADRANT, '0');
-    } else {
-      quadBits = '0'.repeat(BITS_PER_QUADRANT);
+  // Place stones on board
+  if (mixColours) {
+    for (const [r, c] of allStones) {
+      board[r][c] = PENDING_COLOUR;
     }
-
-    // Place real data stones (first 64 positions)
-    for (let i = 0; i < BITS_PER_QUADRANT && i < quadPositions.length; i++) {
-      const [r, c] = quadPositions[i];
-      readingOrder.push({
-        pos: [r, c],
-        quadrant: quad.name,
-        baseColor: quad.baseColor,
-        isDummy: false
-      });
-
-      if (quadBits[i] === '1') {
-        board[r][c] = mixColors ? -1 : quad.baseColor;
-        stonesToPlace.push([r, c, quad.baseColor, false]);
-      }
+    assignColoursWithValidity(board, allStones, size);
+  } else {
+    for (const [r, c] of allStones) {
+      board[r][c] = WHITE;
     }
-
-    // Place dummy stones (remaining positions)
-    for (let i = BITS_PER_QUADRANT; i < quadPositions.length; i++) {
-      const [r, c] = quadPositions[i];
-      // Deterministic pseudo-random placement using key hash and position
-      const shouldPlace = (
-        (hashValue * HASH_MULTIPLIER +
-         r * ROW_MULTIPLIER +
-         c * COL_MULTIPLIER +
-         qIdx * QUADRANT_MULTIPLIER) % 100
-      ) < DUMMY_STONE_PROBABILITY;
-
-      if (shouldPlace) {
-        board[r][c] = mixColors ? -1 : quad.baseColor;
-        stonesToPlace.push([r, c, quad.baseColor, true]);
-        dummyPositions.add(`${r},${c}`);
-      }
-    }
-  }
-
-  // Assign colors if mixing
-  if (mixColors) {
-    assignColorsWithValidity(board, stonesToPlace, size);
   }
 
   return {
@@ -150,9 +250,9 @@ export const encodeWithDummyStones = (
     quadrants,
     centerRow,
     centerCol,
-    totalStones: stonesToPlace.length,
-    dummyCount: dummyPositions.size,
+    totalStones: allStones.length,
+    dummyCount: totalDummyCount,
     bitsPerQuadrant: BITS_PER_QUADRANT
-  };
+  } as const;
 };
 

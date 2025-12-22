@@ -1,83 +1,132 @@
 import type { Board } from './types';
 import { canPlaceSafely } from './validator';
 import {
-    BLACK,
-    WHITE,
-    EMPTY,
-    COLOR_VARIATION_ROW_FACTOR,
-    COLOR_VARIATION_COL_FACTOR,
-    COLOR_VARIATION_THRESHOLD, COLOR_VARIATION_FLIP_THRESHOLD
+  BLACK,
+  COLOUR_VARIATION_COL_FACTOR,
+  COLOUR_VARIATION_FLIP_THRESHOLD,
+  COLOUR_VARIATION_ROW_FACTOR,
+  COLOUR_VARIATION_THRESHOLD,
+  EMPTY,
+  WHITE,
 } from '../utils/constants';
 
-type StoneInfo = [number, number, number, boolean]; // [row, col, baseColor, isDummy]
+type StoneInfo = readonly [number, number, number, boolean]; // [row, col, baseColour, isDummy]
 
-interface NeighborInfo {
-  empty: number;
-  black: number;
-  white: number;
-}
+type NeighborInfo = {
+  readonly empty: number;
+  readonly black: number;
+  readonly white: number;
+};
+
+type Direction = readonly [number, number];
+const DIRECTIONS: readonly Direction[] = [[-1, 0], [1, 0], [0, -1], [0, 1]] as const;
 
 /**
- * Assign colors to stones ensuring Go validity
+ * Get neighbor information for a position (pure function)
  */
-export const assignColorsWithValidity = (
+const getNeighborInfo = (board: Board, row: number, col: number, size: number): NeighborInfo => {
+  const neighbors = DIRECTIONS
+    .map(([dr, dc]): readonly [number, number] => [row + dr, col + dc])
+    .filter(([r, c]) => r >= 0 && r < size && c >= 0 && c < size)
+    .map(([r, c]) => board[r][c]);
+
+  return {
+    empty: neighbors.filter(cell => cell === EMPTY).length,
+    black: neighbors.filter(cell => cell === BLACK).length,
+    white: neighbors.filter(cell => cell === WHITE).length
+  };
+};
+
+/**
+ * Calculate colour variation based on position (pure function)
+ */
+const calculateColourVariation = (row: number, col: number): number =>
+  (row * COLOUR_VARIATION_ROW_FACTOR + col * COLOUR_VARIATION_COL_FACTOR) % COLOUR_VARIATION_THRESHOLD;
+
+/**
+ * Determine if colour should be flipped for natural appearance (pure function)
+ */
+const shouldFlipColour = (row: number, col: number, isDummy: boolean): boolean =>
+  !isDummy && calculateColourVariation(row, col) < COLOUR_VARIATION_FLIP_THRESHOLD;
+
+/**
+ * Choose colour based on safety and neighbors (pure function)
+ */
+const chooseColourSafely = (
   board: Board,
-  stones: StoneInfo[],
+  row: number,
+  col: number,
+  baseColour: number,
+  neighborInfo: NeighborInfo,
   size: number
-): void => {
-  // Sort stones by board position for consistent placement
-  stones.sort((a, b) => {
+): number => {
+  const { empty, black, white } = neighborInfo;
+
+  // Prefer black if it has neighbors and is safe
+  if (black > 0 && canPlaceSafely(board, row, col, BLACK, size)) {
+    return BLACK;
+  }
+
+  // Prefer white if it has neighbors and is safe
+  if (white > 0 && canPlaceSafely(board, row, col, WHITE, size)) {
+    return WHITE;
+  }
+
+  // Fall back to base colour or balance
+  return empty === 0 ? (black <= white ? BLACK : WHITE) : baseColour;
+};
+
+/**
+ * Determine colour for a stone (pure function)
+ */
+const determineStoneColour = (
+  board: Board,
+  row: number,
+  col: number,
+  baseColour: number,
+  isDummy: boolean,
+  size: number
+): number => {
+  const neighborInfo = getNeighborInfo(board, row, col, size);
+
+  // Safe placement with 2+ empty neighbors - can vary colour
+  if (neighborInfo.empty >= 2) {
+    return shouldFlipColour(row, col, isDummy)
+      ? (baseColour === BLACK ? WHITE : BLACK)
+      : baseColour;
+  }
+
+  // Tight placement - choose based on safety
+  if (neighborInfo.empty === 1) {
+    return chooseColourSafely(board, row, col, baseColour, neighborInfo, size);
+  }
+
+  // No empty neighbors - must be very careful
+  return chooseColourSafely(board, row, col, baseColour, neighborInfo, size);
+};
+
+/**
+ * Sort stones by board position for consistent placement (pure function)
+ */
+const sortStonesByPosition = (stones: readonly StoneInfo[], size: number): readonly StoneInfo[] =>
+  [...stones].sort((a, b) => {
     const [r1, c1] = a;
     const [r2, c2] = b;
     return (r1 * size + c1) - (r2 * size + c2);
   });
 
-  for (const [row, col, baseColor, isDummy] of stones) {
-    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    const neighborInfo: NeighborInfo = { empty: 0, black: 0, white: 0 };
+/**
+ * Assign colours to stones ensuring Go validity
+ * Mutates the board in place
+ */
+export const assignColoursWithValidity = (
+  board: Board,
+  stones: readonly StoneInfo[],
+  size: number
+): void => {
+  const sortedStones = sortStonesByPosition(stones, size);
 
-    // Analyze neighbors
-    for (const [dr, dc] of directions) {
-      const nr = row + dr;
-      const nc = col + dc;
-      if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
-        if (board[nr][nc] === EMPTY) neighborInfo.empty++;
-        else if (board[nr][nc] === BLACK) neighborInfo.black++;
-        else if (board[nr][nc] === WHITE) neighborInfo.white++;
-      }
-    }
-
-    // Assign color based on neighbors and safety
-    if (neighborInfo.empty >= 2) {
-      // Safe - vary color for natural appearance using position-based pattern
-      const variation = (
-        row * COLOR_VARIATION_ROW_FACTOR +
-        col * COLOR_VARIATION_COL_FACTOR
-      ) % COLOR_VARIATION_THRESHOLD;
-
-      // Flip color for some positions to create natural distribution
-      if (variation < COLOR_VARIATION_FLIP_THRESHOLD && !isDummy) {
-        board[row][col] = baseColor === BLACK ? WHITE : BLACK;
-      } else {
-        board[row][col] = baseColor;
-      }
-    } else if (neighborInfo.empty === 1) {
-      if (neighborInfo.black > 0 && canPlaceSafely(board, row, col, BLACK, size)) {
-        board[row][col] = BLACK;
-      } else if (neighborInfo.white > 0 && canPlaceSafely(board, row, col, WHITE, size)) {
-        board[row][col] = WHITE;
-      } else {
-        board[row][col] = baseColor;
-      }
-    } else {
-      if (neighborInfo.black > 0 && canPlaceSafely(board, row, col, BLACK, size)) {
-        board[row][col] = BLACK;
-      } else if (neighborInfo.white > 0 && canPlaceSafely(board, row, col, WHITE, size)) {
-        board[row][col] = WHITE;
-      } else {
-        board[row][col] = neighborInfo.black <= neighborInfo.white ? BLACK : WHITE;
-      }
-    }
+  for (const [row, col, baseColour, isDummy] of sortedStones) {
+    board[row][col] = determineStoneColour(board, row, col, baseColour, isDummy, size);
   }
 };
-
