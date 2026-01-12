@@ -14,7 +14,7 @@ export const DummyModeControls: FC = () => {
         board,
     } = useGameStore();
 
-    const patternOptions: SpreadPatternType[] = ['sequential', 'distributed', 'checkerboard', 'spiral'];
+    const patternOptions: SpreadPatternType[] = ['distributed', 'checkerboard'];
 
     const stoneCount = board.flat().filter(s => s !== null).length;
     const blackCount = board.flat().filter(s => s === 'black').length;

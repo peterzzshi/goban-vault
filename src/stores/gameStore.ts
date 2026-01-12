@@ -15,14 +15,11 @@ export const KEY_SIZE_TO_BOARD_SIZE: Record<KeySize, BoardSize> = {
 
 export const BOARD_SIZE_CONFIG: Record<BoardSize, {
     size: BoardSize;
-    quadrantSize: number;
-    bitsPerQuadrant: number;
-    hasCenter: boolean;
     label: string;
 }> = {
-    9: { size: 9, quadrantSize: 9, bitsPerQuadrant: 64, hasCenter: false, label: '9×9' },
-    13: { size: 13, quadrantSize: 6, bitsPerQuadrant: 32, hasCenter: true, label: '13×13' },
-    19: { size: 19, quadrantSize: 9, bitsPerQuadrant: 64, hasCenter: true, label: '19×19' },
+    9: { size: 9, label: '9×9' },
+    13: { size: 13, label: '13×13' },
+    19: { size: 19, label: '19×19' },
 };
 
 const createEmptyBoard = (size: BoardSize = 19): StoneColor[][] =>
@@ -55,7 +52,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
     boardSize: 19,
     keySize: 256,
     paddingMode: 'left',
-    spreadPattern: 'sequential',
+    spreadPattern: 'distributed',
     editStoneColor: 'white',
 
     setBoard: (board: StoneColor[][]): void => {
