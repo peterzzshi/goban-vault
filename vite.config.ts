@@ -26,9 +26,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['lightweight-charts'],
-          state: ['zustand', '@tanstack/react-query'],
+          vendor: ['react', 'react-dom'],
+          state: ['zustand'],
         },
       },
     },
