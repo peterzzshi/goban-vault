@@ -6,17 +6,19 @@ import type { FC } from 'react';
 
 export const DummyModeControls: FC = () => {
     const {
-        isDummyMode,
-        toggleDummyMode,
-        dummyStoneColor,
-        setDummyStoneColor,
-        clearDummyStones,
+        editStoneColor,
+        setEditStoneColor,
+        clearBoard,
         spreadPattern,
         setSpreadPattern,
-        dummyStones,
+        board,
     } = useGameStore();
 
     const patternOptions: SpreadPatternType[] = ['sequential', 'distributed', 'checkerboard', 'spiral'];
+
+    const stoneCount = board.flat().filter(s => s !== null).length;
+    const blackCount = board.flat().filter(s => s === 'black').length;
+    const whiteCount = board.flat().filter(s => s === 'white').length;
 
     return (
         <div className="dummy-mode-controls">
@@ -39,61 +41,39 @@ export const DummyModeControls: FC = () => {
             </div>
 
             <div className="control-section">
-                <h3>Dummy Stone Mode</h3>
+                <h3>Place Stones</h3>
+                <div className="color-selector">
+                    <button
+                        className={`color-btn black ${editStoneColor === 'black' ? 'selected' : ''}`}
+                        onClick={() => setEditStoneColor('black')}
+                    >
+                        ⚫ Black
+                    </button>
+                    <button
+                        className={`color-btn white ${editStoneColor === 'white' ? 'selected' : ''}`}
+                        onClick={() => setEditStoneColor('white')}
+                    >
+                        ⚪ White
+                    </button>
+                </div>
+
+                <p className="stone-count">
+                    ⚫ {blackCount} · ⚪ {whiteCount} · Total: {stoneCount}
+                </p>
+
                 <button
-                    onClick={toggleDummyMode}
-                    className={`mode-toggle ${isDummyMode ? 'active' : ''}`}
+                    onClick={clearBoard}
+                    className="clear-btn"
+                    disabled={stoneCount === 0}
                 >
-                    {isDummyMode ? '🔵 Dummy Mode ON' : '⚪ Dummy Mode OFF'}
+                    Clear Board
                 </button>
-
-                {isDummyMode && (
-                    <div className="dummy-options">
-                        <div className="color-selector">
-                            <label>Stone Color:</label>
-                            <button
-                                className={`color-btn black ${dummyStoneColor === 'black' ? 'selected' : ''}`}
-                                onClick={() => setDummyStoneColor('black')}
-                            >
-                                ⚫ Black
-                            </button>
-                            <button
-                                className={`color-btn white ${dummyStoneColor === 'white' ? 'selected' : ''}`}
-                                onClick={() => setDummyStoneColor('white')}
-                            >
-                                ⚪ White
-                            </button>
-                        </div>
-
-                        <p className="dummy-count">
-                            Dummy stones placed: {dummyStones.size}
-                        </p>
-
-                        <button
-                            onClick={clearDummyStones}
-                            className="clear-btn"
-                            disabled={dummyStones.size === 0}
-                        >
-                            Clear All Dummy Stones
-                        </button>
-                    </div>
-                )}
             </div>
 
             <div className="control-section instructions">
-                {isDummyMode ? (
-                    <>
-                        <p>🔵 <strong>Dummy Mode Active</strong></p>
-                        <p>Click empty positions to place dummy stones.</p>
-                        <p>Click existing dummy stones to remove them.</p>
-                        <p>Dummy stones won't affect the private key.</p>
-                    </>
-                ) : (
-                    <>
-                        <p>Click board positions to toggle encoded bits.</p>
-                        <p>Enable Dummy Mode to add decorative stones.</p>
-                    </>
-                )}
+                <p>Click empty positions to place stones.</p>
+                <p>Click existing stones to remove them.</p>
+                <p>The key updates automatically as you edit.</p>
             </div>
         </div>
     );

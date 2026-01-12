@@ -1,5 +1,11 @@
-import { spreadPatterns, type SpreadPatternType } from './spreadPatterns';
-import { BOARD_SIZE_CONFIG, KEY_SIZE_TO_BOARD_SIZE, type StoneColor, type BoardSize, type KeySize } from '../stores/gameStore';
+import {spreadPatterns, type SpreadPatternType} from './spreadPatterns';
+import {
+    BOARD_SIZE_CONFIG,
+    type BoardSize,
+    KEY_SIZE_TO_BOARD_SIZE,
+    type KeySize,
+    type StoneColor
+} from '../stores/gameStore';
 
 interface BoardConfig {
     boardSize: BoardSize;
@@ -110,13 +116,20 @@ export function encodePrivateKey(
                 const { row, col } = quadrantPosToBoard(quadrant, posIndex, config.quadrantSize);
                 const boardRow = board[row];
                 if (boardRow) {
-                    boardRow[col] = 'white';
+                    boardRow[col] = assignStoneColor(row, col, q, bit);
                 }
             }
         }
     }
 
     return board;
+}
+
+function assignStoneColor(row: number, col: number, quadrant: number, bitIndex: number): 'black' | 'white' {
+    const pattern = (row + col + quadrant) % 3;
+    if (pattern === 0) return 'black';
+    if (pattern === 1) return 'white';
+    return bitIndex % 2 === 0 ? 'black' : 'white';
 }
 
 export function decodeBoard(

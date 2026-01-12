@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { validateDummyPlacement } from '../lib/goRules';
+import { wouldBeSuicide, wouldCapture } from '../lib/goRules';
 import { useGameStore, type BoardSize } from '../stores/gameStore';
 import './Board.css';
 
@@ -24,13 +24,10 @@ export const Board: React.FC = () => {
     const {
         board,
         boardSize,
-        dummyStones,
-        isDummyMode,
-        dummyStoneColor,
-        placeDummyStone,
-        removeDummyStone,
-        getVisibleStone,
-        isDummyStoneAt,
+        editStoneColor,
+        placeStone,
+        removeStone,
+        getStone,
     } = useGameStore();
 
     const starPoints = useMemo(() => getStarPoints(boardSize), [boardSize]);
@@ -43,58 +40,47 @@ export const Board: React.FC = () => {
 
     const handleIntersectionClick = useCallback(
         (row: number, col: number) => {
-            if (isDummyMode) {
-                if (isDummyStoneAt(row, col)) {
-                    removeDummyStone(row, col);
-                } else if (board[row]?.[col] === null) {
-                    const validation = validateDummyPlacement(
-                        board,
-                        dummyStones,
-                        row,
-                        col,
-                        dummyStoneColor
-                    );
-                    if (validation.valid) {
-                        placeDummyStone(row, col);
-                    } else {
-                        console.warn(validation.reason);
-                    }
+            const currentStone = getStone(row, col);
+
+            if (currentStone !== null) {
+                removeStone(row, col);
+            } else {
+                const wouldSuicide = wouldBeSuicide(board, row, col, editStoneColor);
+                const captures = wouldCapture(board, row, col, editStoneColor);
+
+                if (wouldSuicide && captures.length === 0) {
+                    console.warn('Invalid move: suicide');
+                    return;
                 }
+                placeStone(row, col);
             }
         },
-        [isDummyMode, dummyStoneColor, board, dummyStones, placeDummyStone, removeDummyStone, isDummyStoneAt]
+        [board, editStoneColor, placeStone, removeStone, getStone]
     );
 
     const validationErrors = useMemo(() => {
-        if (!isDummyMode) return new Map<string, string>();
-
         const errors = new Map<string, string>();
         for (let row = 0; row < boardSize; row++) {
             for (let col = 0; col < boardSize; col++) {
-                if (board[row]?.[col] === null && !isDummyStoneAt(row, col)) {
-                    const validation = validateDummyPlacement(
-                        board,
-                        dummyStones,
-                        row,
-                        col,
-                        dummyStoneColor
-                    );
-                    if (!validation.valid) {
-                        errors.set(`${row}-${col}`, validation.reason ?? 'Invalid');
+                if (board[row]?.[col] === null) {
+                    const wouldSuicide = wouldBeSuicide(board, row, col, editStoneColor);
+                    const captures = wouldCapture(board, row, col, editStoneColor);
+
+                    if (wouldSuicide && captures.length === 0) {
+                        errors.set(`${row}-${col}`, 'Suicide move');
                     }
                 }
             }
         }
         return errors;
-    }, [isDummyMode, board, boardSize, dummyStones, dummyStoneColor, isDummyStoneAt]);
+    }, [board, boardSize, editStoneColor]);
 
     return (
-        <div className={`board board-${boardSize} ${isDummyMode ? 'dummy-mode' : ''}`}>
+        <div className={`board board-${boardSize}`}>
             {Array.from({ length: boardSize }, (_, row) => (
                 <div key={row} className="board-row">
                     {Array.from({ length: boardSize }, (_, col) => {
-                        const visibleStone = getVisibleStone(row, col);
-                        const isDummy = isDummyStoneAt(row, col);
+                        const stone = getStone(row, col);
                         const key = `${row}-${col}`;
                         const validationError = validationErrors.get(key);
 
@@ -110,14 +96,12 @@ export const Board: React.FC = () => {
                                     <div className={`v-line ${row === 0 ? 'edge-top' : ''} ${row === boardSize - 1 ? 'edge-bottom' : ''}`} />
                                 </div>
 
-                                {isStarPoint(row, col) && !visibleStone && (
+                                {isStarPoint(row, col) && !stone && (
                                     <div className="star-point" />
                                 )}
 
-                                {visibleStone && (
-                                    <div
-                                        className={`stone ${visibleStone} ${isDummy ? 'dummy' : ''} ${isDummy && isDummyMode ? 'dummy-editing' : ''}`}
-                                    />
+                                {stone && (
+                                    <div className={`stone ${stone}`} />
                                 )}
                             </div>
                         );

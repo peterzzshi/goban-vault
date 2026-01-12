@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FC, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FC, type ChangeEvent, type KeyboardEvent } from 'react';
 
 import { encodePrivateKey, decodeBoard } from '../lib/encoder';
 import { useGameStore, type KeySize, type PaddingMode } from '../stores/gameStore';
@@ -10,10 +10,10 @@ const KEY_SIZE_OPTIONS: { size: KeySize; hexChars: number; label: string }[] = [
     { size: 256, hexChars: 64, label: '256 bits (64 hex)' },
 ];
 
-const PADDING_MODE_OPTIONS: { mode: PaddingMode; label: string; description: string }[] = [
-    { mode: 'left', label: 'Pad Left (zeros)', description: 'Add zeros at the start' },
-    { mode: 'right', label: 'Pad Right (zeros)', description: 'Add zeros at the end' },
-    { mode: 'none', label: 'No Padding', description: 'Use input as-is' },
+const PADDING_MODE_OPTIONS: { mode: PaddingMode; label: string }[] = [
+    { mode: 'left', label: 'Pad Left (zeros)' },
+    { mode: 'right', label: 'Pad Right (zeros)' },
+    { mode: 'none', label: 'No Padding' },
 ];
 
 const applyPadding = (hex: string, targetLength: number, mode: PaddingMode): string => {
@@ -26,10 +26,8 @@ const applyPadding = (hex: string, targetLength: number, mode: PaddingMode): str
 
 export const PrivateKeyInput: FC = () => {
     const {
-        privateKey,
-        setPrivateKey,
-        setBoard,
         board,
+        setBoard,
         spreadPattern,
         keySize,
         setKeySize,
@@ -37,76 +35,79 @@ export const PrivateKeyInput: FC = () => {
         setPaddingMode,
     } = useGameStore();
 
-    const [inputValue, setInputValue] = useState(privateKey);
-    const [isEditing, setIsEditing] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [isUserEditing, setIsUserEditing] = useState(false);
+    const prevSpreadPatternRef = useRef(spreadPattern);
 
     const currentKeyConfig = KEY_SIZE_OPTIONS.find(opt => opt.size === keySize) ?? KEY_SIZE_OPTIONS[2];
     const maxHexChars = currentKeyConfig?.hexChars ?? 64;
 
+    const decodedKey = decodeBoard(board, spreadPattern, keySize);
+
     useEffect(() => {
-        if (!isEditing && inputValue !== privateKey) {
+        if (prevSpreadPatternRef.current !== spreadPattern && inputValue) {
+            const newBoard = encodePrivateKey(inputValue, spreadPattern, keySize);
+            setBoard(newBoard);
+        }
+        prevSpreadPatternRef.current = spreadPattern;
+    }, [spreadPattern, inputValue, keySize, setBoard]);
+
+    useEffect(() => {
+        if (!isUserEditing) {
             const timeoutId = setTimeout(() => {
-                setInputValue(privateKey);
+                setInputValue(decodedKey);
             }, 0);
             return () => clearTimeout(timeoutId);
         }
         return undefined;
-    }, [privateKey, isEditing, inputValue]);
+    }, [decodedKey, isUserEditing]);
 
     const handleInputChange = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
-            const value = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, maxHexChars);
+            const value = e.target.value.replace(/[^0-9a-fA-F]/g, '').toLowerCase().slice(0, maxHexChars);
             setInputValue(value);
-            setIsEditing(true);
+            setIsUserEditing(true);
         },
         [maxHexChars]
     );
 
+    const applyKeyToBoard = useCallback(() => {
+        setIsUserEditing(false);
+        const paddedValue = applyPadding(inputValue, maxHexChars, paddingMode);
+        const newBoard = encodePrivateKey(paddedValue, spreadPattern, keySize);
+        setBoard(newBoard);
+        setInputValue(paddedValue);
+    }, [inputValue, maxHexChars, paddingMode, spreadPattern, keySize, setBoard]);
+
     const handleInputBlur = useCallback(() => {
-        setIsEditing(false);
-        if (inputValue !== privateKey) {
-            const paddedValue = applyPadding(inputValue, maxHexChars, paddingMode);
-            setPrivateKey(paddedValue);
-            const newBoard = encodePrivateKey(paddedValue, spreadPattern, keySize);
-            setBoard(newBoard);
-        }
-    }, [inputValue, privateKey, setPrivateKey, setBoard, spreadPattern, keySize, maxHexChars, paddingMode]);
+        applyKeyToBoard();
+    }, [applyKeyToBoard]);
 
     const handleKeyDown = useCallback(
         (e: KeyboardEvent<HTMLInputElement>) => {
             if (e.key === 'Enter') {
-                handleInputBlur();
+                applyKeyToBoard();
             }
         },
-        [handleInputBlur]
+        [applyKeyToBoard]
     );
 
     const handleKeySizeChange = useCallback(
         (e: ChangeEvent<HTMLSelectElement>) => {
             const newSize = Number(e.target.value) as KeySize;
             setKeySize(newSize);
-
-            const newConfig = KEY_SIZE_OPTIONS.find(opt => opt.size === newSize);
-            if (newConfig && inputValue) {
-                const paddedValue = applyPadding(inputValue, newConfig.hexChars, paddingMode);
-                setInputValue(paddedValue);
-                setPrivateKey(paddedValue);
-                const newBoard = encodePrivateKey(paddedValue, spreadPattern, newSize);
-                setBoard(newBoard);
-            }
+            setInputValue('');
+            setIsUserEditing(false);
         },
-        [inputValue, paddingMode, setKeySize, setPrivateKey, setBoard, spreadPattern]
+        [setKeySize]
     );
 
     const handlePaddingModeChange = useCallback(
         (e: ChangeEvent<HTMLSelectElement>) => {
-            const newMode = e.target.value as PaddingMode;
-            setPaddingMode(newMode);
+            setPaddingMode(e.target.value as PaddingMode);
         },
         [setPaddingMode]
     );
-
-    const decodedKey = decodeBoard(board, spreadPattern, keySize);
 
     const generateRandom = useCallback(() => {
         const byteCount = maxHexChars / 2;
@@ -116,16 +117,17 @@ export const PrivateKeyInput: FC = () => {
             .map(b => b.toString(16).padStart(2, '0'))
             .join('');
         setInputValue(hex);
-        setPrivateKey(hex);
         const newBoard = encodePrivateKey(hex, spreadPattern, keySize);
         setBoard(newBoard);
-    }, [setPrivateKey, setBoard, spreadPattern, keySize, maxHexChars]);
+        setIsUserEditing(false);
+    }, [setBoard, spreadPattern, keySize, maxHexChars]);
 
     const clearAll = useCallback(() => {
         setInputValue('');
-        setPrivateKey('');
         setBoard(encodePrivateKey('', spreadPattern, keySize));
-    }, [setPrivateKey, setBoard, spreadPattern, keySize]);
+        setIsUserEditing(false);
+    }, [setBoard, spreadPattern, keySize]);
+
 
     const needsPadding = inputValue.length > 0 && inputValue.length < maxHexChars;
 
@@ -198,13 +200,8 @@ export const PrivateKeyInput: FC = () => {
             </div>
 
             <div className="decoded-display">
-                <label>Decoded from Board:</label>
-                <code className={decodedKey === privateKey ? 'match' : 'mismatch'}>
-                    {decodedKey || '(empty)'}
-                </code>
-                {decodedKey && decodedKey !== privateKey && (
-                    <span className="sync-warning">⚠️ Out of sync</span>
-                )}
+                <label>Current Key (from board):</label>
+                <code>{decodedKey || '(empty)'}</code>
             </div>
         </div>
     );

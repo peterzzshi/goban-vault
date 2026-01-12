@@ -33,40 +33,30 @@ const createEmptyBoard = (size: BoardSize = 19): StoneColor[][] =>
 export interface GameState {
     board: StoneColor[][];
     boardSize: BoardSize;
-    dummyStones: Map<string, 'black' | 'white'>;
-    privateKey: string;
     keySize: KeySize;
     paddingMode: PaddingMode;
     spreadPattern: SpreadPatternType;
-    isDummyMode: boolean;
-    dummyStoneColor: 'black' | 'white';
+    editStoneColor: 'black' | 'white';
 
     setBoard: (board: StoneColor[][]) => void;
     setBoardSize: (size: BoardSize) => void;
-    setPrivateKey: (key: string) => void;
     setKeySize: (size: KeySize) => void;
     setPaddingMode: (mode: PaddingMode) => void;
     setSpreadPattern: (pattern: SpreadPatternType) => void;
-    toggleDummyMode: () => void;
-    setDummyMode: (enabled: boolean) => void;
-    setDummyStoneColor: (color: 'black' | 'white') => void;
-    placeDummyStone: (row: number, col: number) => void;
-    removeDummyStone: (row: number, col: number) => void;
-    clearDummyStones: () => void;
-    getVisibleStone: (row: number, col: number) => StoneColor;
-    isDummyStoneAt: (row: number, col: number) => boolean;
+    setEditStoneColor: (color: 'black' | 'white') => void;
+    placeStone: (row: number, col: number) => void;
+    removeStone: (row: number, col: number) => void;
+    clearBoard: () => void;
+    getStone: (row: number, col: number) => StoneColor;
 }
 
-export const useGameStore = create<GameState>()(set => ({
+export const useGameStore = create<GameState>()((set, get) => ({
     board: createEmptyBoard(19),
     boardSize: 19,
-    dummyStones: new Map<string, 'black' | 'white'>(),
-    privateKey: '',
     keySize: 256,
     paddingMode: 'left',
     spreadPattern: 'sequential',
-    isDummyMode: false,
-    dummyStoneColor: 'black',
+    editStoneColor: 'white',
 
     setBoard: (board: StoneColor[][]): void => {
         set({ board });
@@ -76,12 +66,7 @@ export const useGameStore = create<GameState>()(set => ({
         set({
             boardSize: size,
             board: createEmptyBoard(size),
-            dummyStones: new Map<string, 'black' | 'white'>(),
         });
-    },
-
-    setPrivateKey: (key: string): void => {
-        set({ privateKey: key });
     },
 
     setKeySize: (size: KeySize): void => {
@@ -90,7 +75,6 @@ export const useGameStore = create<GameState>()(set => ({
             keySize: size,
             boardSize: newBoardSize,
             board: createEmptyBoard(newBoardSize),
-            dummyStones: new Map<string, 'black' | 'white'>(),
         });
     },
 
@@ -102,53 +86,39 @@ export const useGameStore = create<GameState>()(set => ({
         set({ spreadPattern: pattern });
     },
 
-    toggleDummyMode: (): void => {
-        set(state => ({ isDummyMode: !state.isDummyMode }));
+
+    setEditStoneColor: (color: 'black' | 'white'): void => {
+        set({ editStoneColor: color });
     },
 
-    setDummyMode: (enabled: boolean): void => {
-        set({ isDummyMode: enabled });
-    },
-
-    setDummyStoneColor: (color: 'black' | 'white'): void => {
-        set({ dummyStoneColor: color });
-    },
-
-    placeDummyStone: (row: number, col: number): void => {
+    placeStone: (row: number, col: number): void => {
         set(state => {
-            if (state.board[row]?.[col] !== null) {
-                return state;
+            const newBoard = state.board.map(r => [...r]);
+            const boardRow = newBoard[row];
+            if (boardRow) {
+                boardRow[col] = state.editStoneColor;
             }
-            const newDummyStones = new Map(state.dummyStones);
-            newDummyStones.set(`${row}-${col}`, state.dummyStoneColor);
-            return { dummyStones: newDummyStones };
+            return { board: newBoard };
         });
     },
 
-    removeDummyStone: (row: number, col: number): void => {
+    removeStone: (row: number, col: number): void => {
         set(state => {
-            const newDummyStones = new Map(state.dummyStones);
-            newDummyStones.delete(`${row}-${col}`);
-            return { dummyStones: newDummyStones };
+            const newBoard = state.board.map(r => [...r]);
+            const boardRow = newBoard[row];
+            if (boardRow) {
+                boardRow[col] = null;
+            }
+            return { board: newBoard };
         });
     },
 
-    clearDummyStones: (): void => {
-        set({ dummyStones: new Map<string, 'black' | 'white'>() });
+    clearBoard: (): void => {
+        set(state => ({ board: createEmptyBoard(state.boardSize) }));
     },
 
-    getVisibleStone: (row: number, col: number): StoneColor => {
-        const state = useGameStore.getState();
-        const boardRow = state.board[row];
-        if (boardRow && boardRow[col] !== null) {
-            return boardRow[col] ?? null;
-        }
-        const key = `${row}-${col}`;
-        return state.dummyStones.get(key) ?? null;
-    },
-
-    isDummyStoneAt: (row: number, col: number): boolean => {
-        const key = `${row}-${col}`;
-        return useGameStore.getState().dummyStones.has(key);
+    getStone: (row: number, col: number): StoneColor => {
+        const state = get();
+        return state.board[row]?.[col] ?? null;
     },
 }));
