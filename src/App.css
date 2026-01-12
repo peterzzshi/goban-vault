@@ -1,6 +1,81 @@
-/* App specific styles - minimal to avoid conflicts with Tailwind */
-#root {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg-primary, #1a1a2e);
+  color: var(--color-text-primary, #eee);
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  text-align: center;
+  padding: 20px;
+  background: var(--color-bg-secondary, #16213e);
+  border-bottom: 1px solid #333;
+}
+
+.app-header h1 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+}
+
+.app-header p {
+  margin: 0;
+  color: var(--color-text-secondary, #aaa);
+  font-size: 14px;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  padding: 24px;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.controls-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 320px;
+}
+
+.board-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 16px;
+  background: var(--color-bg-secondary, #16213e);
+  border-top: 1px solid #333;
+}
+
+.app-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted, #888);
+}
+
+@media (max-width: 900px) {
+  .app-main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .controls-panel {
+    max-width: 100%;
+    width: 100%;
+  }
 }

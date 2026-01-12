@@ -1,0 +1,127 @@
+.board {
+    display: inline-flex;
+    flex-direction: column;
+    background: #dcb35c;
+    padding: 20px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.board.dummy-mode {
+    box-shadow: 0 0 0 3px #4a90d9, 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.board-row {
+    display: flex;
+}
+
+.intersection {
+    width: 28px;
+    height: 28px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.intersection:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.intersection.invalid-hover:hover {
+    background: rgba(255, 0, 0, 0.15);
+    cursor: not-allowed;
+}
+
+
+.grid-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.h-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #8b6914;
+    transform: translateY(-50%);
+}
+
+.h-line.edge-left {
+    left: 50%;
+}
+
+.h-line.edge-right {
+    right: 50%;
+}
+
+.v-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: #8b6914;
+    transform: translateX(-50%);
+}
+
+.v-line.edge-top {
+    top: 50%;
+}
+
+.v-line.edge-bottom {
+    bottom: 50%;
+}
+
+.star-point {
+    width: 8px;
+    height: 8px;
+    background: #8b6914;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.stone {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    z-index: 2;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.stone.black {
+    background: radial-gradient(circle at 30% 30%, #555, #000);
+}
+
+.stone.white {
+    background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+    border: 1px solid #999;
+}
+
+/* Dummy stone styles when editing */
+.stone.dummy.dummy-editing {
+    opacity: 0.7;
+    box-shadow: 0 0 0 2px #4a90d9, 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Dummy stone indicator (subtle) when not in dummy mode */
+.stone.dummy:not(.dummy-editing)::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: transparent;
+    border-radius: 50%;
+}
+
+.stone:hover {
+    transform: scale(1.05);
+}
