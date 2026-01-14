@@ -3,12 +3,11 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    background: var(--color-bg-card, #1e2a4a);
+    background: var(--color-bg-card);
     border-radius: 8px;
-    border: 1px solid var(--color-border, #3a4a6a);
+    border: 1px solid var(--color-border);
 }
 
-/* Key size and padding configuration row */
 .key-config-row {
     display: flex;
     gap: 12px;
@@ -24,27 +23,26 @@
 .config-group label {
     font-size: 11px;
     font-weight: 600;
-    color: var(--color-text-muted, #8899aa);
+    color: var(--color-text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .config-select {
     padding: 8px 10px;
-    border: 1px solid var(--color-border-hover, #4a5a7a);
+    border: 1px solid var(--color-border-hover);
     border-radius: 4px;
     font-size: 12px;
-    background: var(--color-bg-input, #2a3a5a);
-    color: var(--color-text-primary, #e0e0e0);
+    background: var(--color-bg-input);
+    color: var(--color-text-primary);
     cursor: pointer;
 }
 
 .config-select:focus {
     outline: none;
-    border-color: var(--color-accent, #6a9fd9);
+    border-color: var(--color-accent);
 }
 
-/* Input group styles */
 .input-group {
     display: flex;
     flex-direction: column;
@@ -54,32 +52,32 @@
 .input-group label {
     font-size: 13px;
     font-weight: 600;
-    color: var(--color-text-primary, #e0e0e0);
+    color: var(--color-text-primary);
 }
 
 .input-group input {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 12px;
-    border: 1px solid var(--color-border-hover, #4a5a7a);
+    font-size: 14px;
+    letter-spacing: 1px;
+    border: 1px solid var(--color-border-hover);
     border-radius: 4px;
     box-sizing: border-box;
-    background: var(--color-bg-input, #2a3a5a);
-    color: #ffffff;
+    background: var(--color-bg-input);
+    color: #fff;
 }
 
 .input-group input::placeholder {
-    color: var(--color-text-muted, #8899aa);
+    color: var(--color-text-muted);
 }
 
 .input-group input:focus {
     outline: none;
-    border-color: var(--color-accent, #6a9fd9);
+    border-color: var(--color-accent);
     box-shadow: 0 0 0 2px rgba(106, 159, 217, 0.3);
 }
 
-/* Input status (char count + padding hint) */
 .input-status {
     display: flex;
     justify-content: space-between;
@@ -89,16 +87,15 @@
 
 .char-count {
     font-size: 11px;
-    color: var(--color-text-muted, #9aa);
+    color: var(--color-text-muted);
 }
 
 .padding-hint {
     font-size: 11px;
-    color: var(--color-warning, #dfaf4f);
+    color: var(--color-warning);
     font-style: italic;
 }
 
-/* Button group */
 .button-group {
     display: flex;
     gap: 8px;
@@ -116,62 +113,20 @@
 }
 
 .btn-generate {
-    background: var(--color-accent, #4a90d9);
+    background: var(--color-accent);
     color: white;
 }
 
 .btn-generate:hover {
-    background: var(--color-accent-hover, #5aa0e9);
+    background: var(--color-accent-hover);
 }
 
 .btn-clear {
-    background: var(--color-border, #3a4a6a);
-    color: var(--color-text-primary, #e0e0e0);
+    background: var(--color-border);
+    color: var(--color-text-primary);
 }
 
 .btn-clear:hover {
-    background: var(--color-border-hover, #4a5a7a);
+    background: var(--color-border-hover);
 }
 
-/* Decoded display */
-.decoded-display {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding-top: 8px;
-    border-top: 1px solid var(--color-border, #3a4a6a);
-}
-
-.decoded-display label {
-    font-size: 12px;
-    color: var(--color-text-secondary, #aabbcc);
-}
-
-.decoded-display code {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 11px;
-    padding: 8px;
-    background: var(--color-bg-input, #2a3a5a);
-    border: 1px solid var(--color-border-hover, #4a5a7a);
-    border-radius: 4px;
-    word-break: break-all;
-    color: var(--color-text-primary, #e0e0e0);
-}
-
-.decoded-display code.match {
-    border-color: var(--color-success, #4a9a6a);
-    background: #1a3a2a;
-    color: #8fdf8f;
-}
-
-.decoded-display code.mismatch {
-    border-color: var(--color-error, #9a4a4a);
-    background: #3a1a1a;
-    color: #df8f8f;
-}
-
-.sync-warning {
-    font-size: 11px;
-    color: var(--color-warning, #dfaf4f);
-    margin-top: 4px;
-}

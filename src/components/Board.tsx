@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { wouldBeSuicide, wouldCapture } from '../core/goRules';
+import { wouldBeSuicide, wouldCapture, applyCaptures } from '../core/goRules';
 import { useGameStore } from '../store';
 
 import type { BoardSize } from '../types';
@@ -27,9 +27,9 @@ export const Board: React.FC = () => {
         board,
         boardSize,
         editStoneColour,
-        placeStone,
         removeStone,
         getStone,
+        setBoard,
     } = useGameStore();
 
     const starPoints = useMemo(() => getStarPoints(boardSize), [boardSize]);
@@ -53,10 +53,17 @@ export const Board: React.FC = () => {
                 if (suicide && captures.length === 0) {
                     return;
                 }
-                placeStone(row, col);
+
+                const newBoard = board.map(r => [...r]);
+                const boardRow = newBoard[row];
+                if (boardRow) {
+                    boardRow[col] = editStoneColour;
+                }
+                const boardWithCaptures = applyCaptures(newBoard, boardSize);
+                setBoard(boardWithCaptures);
             }
         },
-        [board, boardSize, editStoneColour, placeStone, removeStone, getStone]
+        [board, boardSize, editStoneColour, removeStone, getStone, setBoard]
     );
 
     const validationErrors = useMemo(() => {

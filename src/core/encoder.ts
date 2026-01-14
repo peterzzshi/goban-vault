@@ -1,3 +1,4 @@
+import { applyCaptures } from './goRules';
 import { generatePositions } from './positionGenerator';
 import { KEY_SIZE_TO_BOARD_SIZE } from '../types';
 
@@ -49,7 +50,7 @@ export function encodePrivateKey(
         }
     }
 
-    return board;
+    return applyCaptures(board, boardSize);
 }
 
 function seededRandom(seed: number): () => number {

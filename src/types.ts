@@ -2,7 +2,7 @@ export type StoneType = 'black' | 'white';
 export type CellState = StoneType | null;
 export type KeySize = 64 | 128 | 256;
 export type BoardSize = 9 | 13 | 19;
-export type PaddingMode = 'left' | 'right' | 'none';
+export type PaddingMode = 'left' | 'right';
 
 export const KEY_SIZE_TO_BOARD_SIZE: Record<KeySize, BoardSize> = {
     64: 9,
