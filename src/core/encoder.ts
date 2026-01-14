@@ -1,21 +1,23 @@
-import { spreadPatterns, type SpreadPatternType } from './spreadPatterns';
-import {
-    KEY_SIZE_TO_BOARD_SIZE,
-    type KeySize,
-    type StoneColor
-} from '../stores/gameStore';
+import { generatePositions } from './positionGenerator';
+import { KEY_SIZE_TO_BOARD_SIZE } from '../types';
+
+import type {
+    CellState,
+    KeySize,
+    StoneType
+} from '../types';
 
 export function encodePrivateKey(
     privateKeyHex: string,
-    patternType: SpreadPatternType,
-    keySize: KeySize
-): StoneColor[][] {
+    keySize: KeySize,
+    seed: number
+): CellState[][] {
     const boardSize = KEY_SIZE_TO_BOARD_SIZE[keySize];
     const totalPositions = boardSize * boardSize;
     const hexChars = keySize / 4;
 
-    const board: StoneColor[][] = Array.from({ length: boardSize }, () =>
-        Array.from({ length: boardSize }, () => null as StoneColor)
+    const board: CellState[][] = Array.from({ length: boardSize }, () =>
+        Array.from({ length: boardSize }, () => null as CellState)
     );
 
     const cleanHex = privateKeyHex
@@ -32,8 +34,7 @@ export function encodePrivateKey(
         .map(c => parseInt(c, 16).toString(2).padStart(4, '0'))
         .join('');
 
-    const pattern = spreadPatterns[patternType];
-    const positions = pattern.generatePositions(keySize, totalPositions);
+    const positions = generatePositions(keySize, totalPositions, seed);
 
     for (let bit = 0; bit < keySize; bit++) {
         if (binaryStr[bit] === '1') {
@@ -43,7 +44,7 @@ export function encodePrivateKey(
             const col = posIndex % boardSize;
             const boardRow = board[row];
             if (boardRow) {
-                boardRow[col] = assignStoneColor(row, col, bit, cleanHex);
+                boardRow[col] = assignStoneColour(row, col, bit, seed);
             }
         }
     }
@@ -52,26 +53,15 @@ export function encodePrivateKey(
 }
 
 function seededRandom(seed: number): () => number {
-    let state = seed;
+    let state = seed || 1;
     return () => {
         state = (state * 1103515245 + 12345) & 0x7fffffff;
         return state / 0x7fffffff;
     };
 }
 
-function generateColorSeed(hexKey: string): number {
-    let hash = 0;
-    for (let i = 0; i < hexKey.length; i++) {
-        const char = hexKey.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return Math.abs(hash);
-}
-
-function assignStoneColor(row: number, col: number, bitIndex: number, hexKey: string): 'black' | 'white' {
-    const seed = generateColorSeed(hexKey);
-    const random = seededRandom(seed + bitIndex);
+function assignStoneColour(row: number, col: number, bitIndex: number, seed: number): StoneType {
+    const random = seededRandom(seed + bitIndex * 31);
     const value = random();
 
     const positionBias = (row + col) % 2;
@@ -81,14 +71,13 @@ function assignStoneColor(row: number, col: number, bitIndex: number, hexKey: st
 }
 
 export function decodeBoard(
-    board: StoneColor[][],
-    patternType: SpreadPatternType,
-    keySize: KeySize
+    board: CellState[][],
+    keySize: KeySize,
+    seed: number
 ): string {
     const boardSize = KEY_SIZE_TO_BOARD_SIZE[keySize];
     const totalPositions = boardSize * boardSize;
-    const pattern = spreadPatterns[patternType];
-    const positions = pattern.generatePositions(keySize, totalPositions);
+    const positions = generatePositions(keySize, totalPositions, seed);
 
     let binaryStr = '';
     for (let bit = 0; bit < keySize; bit++) {

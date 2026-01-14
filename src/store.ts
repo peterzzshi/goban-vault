@@ -1,50 +1,38 @@
 import { create } from 'zustand';
 
-import type { SpreadPatternType } from '../lib/spreadPatterns';
+import { KEY_SIZE_TO_BOARD_SIZE } from './types';
 
-export type StoneColor = 'black' | 'white' | null;
-export type KeySize = 64 | 128 | 256;
-export type BoardSize = 9 | 13 | 19;
-export type PaddingMode = 'left' | 'right' | 'none';
+import type {
+    BoardSize,
+    CellState,
+    KeySize,
+    PaddingMode,
+    StoneType
+} from './types';
 
-export const KEY_SIZE_TO_BOARD_SIZE: Record<KeySize, BoardSize> = {
-    64: 9,
-    128: 13,
-    256: 19,
-};
-
-export const BOARD_SIZE_CONFIG: Record<BoardSize, {
-    size: BoardSize;
-    label: string;
-}> = {
-    9: { size: 9, label: '9×9' },
-    13: { size: 13, label: '13×13' },
-    19: { size: 19, label: '19×19' },
-};
-
-const createEmptyBoard = (size: BoardSize = 19): StoneColor[][] =>
+const createEmptyBoard = (size: BoardSize): CellState[][] =>
     Array.from({ length: size }, () =>
-        Array.from({ length: size }, () => null as StoneColor)
+        Array.from({ length: size }, () => null as CellState)
     );
 
 export interface GameState {
-    board: StoneColor[][];
+    board: CellState[][];
     boardSize: BoardSize;
     keySize: KeySize;
     paddingMode: PaddingMode;
-    spreadPattern: SpreadPatternType;
-    editStoneColor: 'black' | 'white';
+    editStoneColour: StoneType;
+    seed: number;
 
-    setBoard: (board: StoneColor[][]) => void;
+    setBoard: (board: CellState[][]) => void;
     setBoardSize: (size: BoardSize) => void;
     setKeySize: (size: KeySize) => void;
     setPaddingMode: (mode: PaddingMode) => void;
-    setSpreadPattern: (pattern: SpreadPatternType) => void;
-    setEditStoneColor: (color: 'black' | 'white') => void;
+    setEditStoneColour: (colour: StoneType) => void;
+    setSeed: (seed: number) => void;
     placeStone: (row: number, col: number) => void;
     removeStone: (row: number, col: number) => void;
     clearBoard: () => void;
-    getStone: (row: number, col: number) => StoneColor;
+    getStone: (row: number, col: number) => CellState;
 }
 
 export const useGameStore = create<GameState>()((set, get) => ({
@@ -52,10 +40,10 @@ export const useGameStore = create<GameState>()((set, get) => ({
     boardSize: 19,
     keySize: 256,
     paddingMode: 'left',
-    spreadPattern: 'distributed',
-    editStoneColor: 'white',
+    editStoneColour: 'white',
+    seed: 0,
 
-    setBoard: (board: StoneColor[][]): void => {
+    setBoard: (board: CellState[][]): void => {
         set({ board });
     },
 
@@ -79,13 +67,12 @@ export const useGameStore = create<GameState>()((set, get) => ({
         set({ paddingMode: mode });
     },
 
-    setSpreadPattern: (pattern: SpreadPatternType): void => {
-        set({ spreadPattern: pattern });
+    setSeed: (seed: number): void => {
+        set({ seed });
     },
 
-
-    setEditStoneColor: (color: 'black' | 'white'): void => {
-        set({ editStoneColor: color });
+    setEditStoneColour: (colour: StoneType): void => {
+        set({ editStoneColour: colour });
     },
 
     placeStone: (row: number, col: number): void => {
@@ -93,7 +80,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
             const newBoard = state.board.map(r => [...r]);
             const boardRow = newBoard[row];
             if (boardRow) {
-                boardRow[col] = state.editStoneColor;
+                boardRow[col] = state.editStoneColour;
             }
             return { board: newBoard };
         });
@@ -114,7 +101,7 @@ export const useGameStore = create<GameState>()((set, get) => ({
         set(state => ({ board: createEmptyBoard(state.boardSize) }));
     },
 
-    getStone: (row: number, col: number): StoneColor => {
+    getStone: (row: number, col: number): CellState => {
         const state = get();
         return state.board[row]?.[col] ?? null;
     },

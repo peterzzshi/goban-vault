@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { wouldBeSuicide, wouldCapture } from '../lib/goRules';
-import { useGameStore, type BoardSize } from '../stores/gameStore';
+import { wouldBeSuicide, wouldCapture } from '../core/goRules';
+import { useGameStore } from '../store';
+
+import type { BoardSize } from '../types';
 import './Board.css';
 
 const getStarPoints = (boardSize: BoardSize): [number, number][] => {
@@ -24,7 +26,7 @@ export const Board: React.FC = () => {
     const {
         board,
         boardSize,
-        editStoneColor,
+        editStoneColour,
         placeStone,
         removeStone,
         getStone,
@@ -45,17 +47,16 @@ export const Board: React.FC = () => {
             if (currentStone !== null) {
                 removeStone(row, col);
             } else {
-                const wouldSuicide = wouldBeSuicide(board, row, col, editStoneColor);
-                const captures = wouldCapture(board, row, col, editStoneColor);
+                const suicide = wouldBeSuicide(board, row, col, editStoneColour, boardSize);
+                const captures = wouldCapture(board, row, col, editStoneColour, boardSize);
 
-                if (wouldSuicide && captures.length === 0) {
-                    console.warn('Invalid move: suicide');
+                if (suicide && captures.length === 0) {
                     return;
                 }
                 placeStone(row, col);
             }
         },
-        [board, editStoneColor, placeStone, removeStone, getStone]
+        [board, boardSize, editStoneColour, placeStone, removeStone, getStone]
     );
 
     const validationErrors = useMemo(() => {
@@ -63,17 +64,17 @@ export const Board: React.FC = () => {
         for (let row = 0; row < boardSize; row++) {
             for (let col = 0; col < boardSize; col++) {
                 if (board[row]?.[col] === null) {
-                    const wouldSuicide = wouldBeSuicide(board, row, col, editStoneColor);
-                    const captures = wouldCapture(board, row, col, editStoneColor);
+                    const suicide = wouldBeSuicide(board, row, col, editStoneColour, boardSize);
+                    const captures = wouldCapture(board, row, col, editStoneColour, boardSize);
 
-                    if (wouldSuicide && captures.length === 0) {
-                        errors.set(`${row}-${col}`, 'Suicide move');
+                    if (suicide && captures.length === 0) {
+                        errors.set(`${row}-${col}`, 'Invalid move');
                     }
                 }
             }
         }
         return errors;
-    }, [board, boardSize, editStoneColor]);
+    }, [board, boardSize, editStoneColour]);
 
     return (
         <div className={`board board-${boardSize}`}>

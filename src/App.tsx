@@ -1,7 +1,8 @@
 import { Board } from './components/Board';
-import { DummyModeControls } from './components/DummyModeControls';
+import { BoardControls } from './components/BoardControls';
 import { PrivateKeyInput } from './components/PrivateKeyInput';
-import { useGameStore, BOARD_SIZE_CONFIG } from './stores/gameStore';
+import { useGameStore } from './store';
+import { BOARD_SIZE_CONFIG } from './types';
 import './App.css';
 
 const App: React.FC = () => {
@@ -18,7 +19,7 @@ const App: React.FC = () => {
             <main className="app-main">
                 <div className="controls-panel">
                     <PrivateKeyInput />
-                    <DummyModeControls />
+                    <BoardControls />
                 </div>
 
                 <div className="board-container">
