@@ -15,10 +15,11 @@ Traditional key storage (files, password managers) are obvious targets. Goban Va
 
 - Encode 64/128/256-bit keys as Go board positions
 - Dynamic board sizes: 9×9, 13×13, 19×19
-- Two spread patterns for natural stone distribution
-- Real-time two-way sync between key and board
-- Full Go rules: captures are applied, no suicide moves
+- Seeded position randomisation for unique layouts
+- Real-time bidirectional sync between key input and board
+- Full Go rules: captures applied automatically, suicide moves prevented
 - Mixed black/white stones for natural appearance
+- Configurable padding (left or right) for partial keys
 
 ## Quick Start
 
@@ -31,139 +32,114 @@ npm run dev
 
 ### As a Key Backup Tool
 
-1. **Enter your key** in the hex input field
+1. **Enter your key** in the hex input field (updates board in real-time)
 2. **Select key size** (64, 128, or 256 bits)
-3. **Choose a spread pattern** (affects stone distribution)
-4. **Optionally add stones** to obscure the pattern — these change the decoded key
-5. **Save the board** (screenshot, print, or remember)
+3. **Choose padding direction** (left or right — affects how short keys are interpreted)
+4. **Set a seed number** (affects stone distribution — memorise this)
+5. **Optionally add/remove stones** to obscure the pattern — the key updates automatically
+6. **Save the board** (screenshot, print, or remember)
 
-To recover: recreate the exact board position → the key appears in the input field.
+To recover: recreate the exact board position with the same seed → the key appears in the input field.
 
-> ⚠️ **Your responsibility**: Remember which stones are "noise" and the spread pattern used. There's no recovery without the exact board state.
+> ⚠️ **Your responsibility**: Remember your seed number and any stone modifications. There's no recovery without these.
 
 ### As a Go Board Editor
 
-Simply click to place/remove stones. The app enforces Go rules — captured groups are removed automatically.
+Click intersections to place stones (in the selected colour). Click existing stones to remove them. Captured groups are removed automatically following Go rules.
 
-## Encoding Explained
+## Encoding
 
-### Board Structure
+### Board Sizes
 
-| Key Size | Board | Positions      |
-|----------|-------|----------------|
-| 64 bits  | 9×9   | 81 (64 used)   |
-| 128 bits | 13×13 | 169 (128 used) |
-| 256 bits | 19×19 | 361 (256 used) |
+| Key Size | Board | Total Positions | Used |
+|----------|-------|-----------------|------|
+| 64 bits  | 9×9   | 81              | 64   |
+| 128 bits | 13×13 | 169             | 128  |
+| 256 bits | 19×19 | 361             | 256  |
 
-### Encoding Rule
+### Binary Mapping
 
 ```
 Stone present = 1
 Empty position = 0
 ```
 
-The board is read position-by-position according to the spread pattern, producing a binary string that converts to hex.
+Positions are read in a seeded order, producing a binary string that converts to hex.
 
-### Spread Patterns
+### Position Generation
 
-**Distributed** — Bits spread evenly across the board
+Positions are mapped using a **seeded shuffle**:
+
+1. Divide board into even `(row + col) % 2 = 0` and odd positions
+2. Shuffle each group using the seed
+3. Combine to get the final position order
+
+Same seed → same layout. Different seeds → completely different boards.
+
+### Stone Colours
+
+Colours are deterministic but appear random:
 ```
-Position = floor(bit × (total_positions / total_bits))
-```
-
-**Checkerboard** — Alternating diagonal pattern (even squares first, then odd)
-```
-First pass: positions where (row + col) % 2 = 0
-Second pass: positions where (row + col) % 2 = 1
-```
-
-Both patterns distribute stones naturally across the entire board, producing realistic-looking game states.
-
-### Colour Assignment
-
-Stone colours are randomised using a seed derived from the key itself:
-```
-seed = hash(key) + bitIndex
-colour = seededRandom(seed) < threshold ? black : white
+colour = seededRandom(seed + bitIndex) < threshold ? black : white
 ```
 
-This produces a unique, natural-looking colour distribution for each key while maintaining reproducibility — the same key always generates the same board.
+This creates natural-looking distributions while remaining reproducible.
 
-### Capture Simulation
+### Capture Rules
 
-After encoding, `applyCaptures()` removes any groups with zero liberties. This ensures the board always shows a valid Go position.
+After any board change, groups with zero liberties are removed. The board always shows a valid Go position.
 
-## Security Considerations
+## Security
 
-### What This Is (and Isn't)
+### What This Provides
 
-Goban Vault provides **obfuscation**, not encryption. Security comes from:
-- Attacker not knowing which stones are "noise" (added or removed)
-- Uncertainty about which spread pattern was used
-- The board looking like an ordinary game
+Goban Vault offers **obfuscation**, not encryption. Security relies on:
 
-### Entropy Analysis
-
-**Effective positions** (19×19 board): **361 positions**
-
-**Go rules constraint**: Not all configurations are valid — stones must have liberties. This reduces the theoretical state space, though valid Go positions still number approximately **10^170**.
+- Attacker not knowing your seed
+- Uncertainty about manual stone modifications
+- The board appearing as an ordinary game
 
 ### Brute Force Resistance
 
-Without modifications, an attacker needs only **6 attempts** (2 patterns × 3 key sizes).
+| Security Layer          | Combinations |
+|-------------------------|--------------|
+| Seed alone (31-bit)     | ~2 billion   |
+| + 20 modified positions | ~10^15       |
+| + 30 modified positions | ~10^18       |
 
-With **P** modified positions, the attacker must try up to **2^P × 6** combinations:
-
-| Modified Positions | Attempts       | Time @ 1M/sec |
-|--------------------|----------------|---------------|
-| 10                 | 6,000          | instant       |
-| 20                 | 6 million      | 6 seconds     |
-| 30                 | 6 billion      | 1.5 hours     |
-| 40                 | 6 trillion     | 70 days       |
-
-### Practical Reality
-
-**Can you remember 40+ modifications?** Yes — if you think in patterns, not individual stones.
-
-Professional Go players routinely memorise entire board positions. Variants like **Phantom Go** and **Blindfold Go** require players to track hidden stones throughout the game — the exact skill this tool leverages.
-
-**Realistic assessment**: A player comfortable with these variants can remember complex board states, easily achieving **40-60 modifications** for strong brute-force resistance.
-
-### Limitations
-
-- **Not cryptographic** — obfuscation, not encryption
-- **Go rules reduce randomness** — some positions are invalid
-- **Human memory limits** — practical security is lower than theoretical
-- **Pattern analysis** — statistical methods might detect encoded regions
+**Recommendation**: Use a memorable seed and modify 20-30 positions.
 
 ### Best Practices
 
-1. Modify positions you can actually remember
-2. Make the final position look like a realistic mid-game
-3. Test recovery multiple times before relying on it
-4. Consider this one layer of defence, not your only protection
+1. Modify positions you can remember
+2. Make the board look like a realistic mid-game
+3. Test recovery before relying on it
+4. Use as one layer of defence, not your only protection
 
 ## Project Structure
 
 ```
 src/
-├── components/     # React UI
-├── lib/
-│   ├── encoder.ts      # Key ↔ Board conversion
-│   ├── goRules.ts      # Liberty checking, captures
-│   └── spreadPatterns.ts  # Pattern algorithms
-└── stores/
-    └── gameStore.ts    # Zustand state
+├── components/
+│   ├── Board.tsx            # Go board UI
+│   ├── BoardControls.tsx    # Seed, colour, and actions
+│   └── PrivateKeyInput.tsx  # Key input and config
+├── core/
+│   ├── encoder.ts           # Key ↔ board conversion
+│   ├── goRules.ts           # Liberty checking, captures
+│   └── positionGenerator.ts # Seeded position mapping
+├── store.ts                 # Zustand state
+└── types.ts                 # Type definitions
 ```
 
 ## Tech Stack
 
-React 19 · TypeScript · Vite · Tailwind CSS · Zustand
+React 19 · TypeScript · Vite · Zustand · Tailwind CSS
 
-## License
+## Licence
 
 MIT
 
 ---
 
-*This is an experimental tool. Use at your own discretion for key storage.*
+*Experimental tool. Use at your own discretion for key storage.*
