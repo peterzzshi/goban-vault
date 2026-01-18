@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type FC, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FC, type ChangeEvent, type KeyboardEvent } from 'react';
 
 import { encodePrivateKey, decodeBoard } from '../core/encoder';
 import { useGameStore } from '../store';
@@ -36,29 +36,25 @@ export const PrivateKeyInput: FC = () => {
         seed,
     } = useGameStore();
 
-    const prevSeedRef = useRef(seed);
-
     const currentKeyConfig = KEY_SIZE_OPTIONS.find(opt => opt.size === keySize) ?? KEY_SIZE_OPTIONS[2];
     const maxHexChars = currentKeyConfig?.hexChars ?? 64;
 
-    const decodedKey = decodeBoard(board, keySize, seed);
+    const decodedFromBoard = useMemo(() => decodeBoard(board, keySize, seed), [board, keySize, seed]);
 
+    const [canonicalKey, setCanonicalKey] = useState<string>('');
+
+    const displayedKey = canonicalKey || decodedFromBoard;
     useEffect(() => {
-        const seedChanged = prevSeedRef.current !== seed;
-
-        if (seedChanged && decodedKey) {
-            const newBoard = encodePrivateKey(decodedKey, keySize, seed);
-            setBoard(newBoard);
-        }
-        prevSeedRef.current = seed;
-    }, [seed, decodedKey, keySize, setBoard]);
+        if (!canonicalKey) return;
+        setBoard(encodePrivateKey(canonicalKey, keySize, seed));
+    }, [seed, canonicalKey, keySize, setBoard]);
 
     const handleInputChange = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
             const value = e.target.value.replace(/[^0-9a-fA-F]/g, '').toLowerCase().slice(0, maxHexChars);
             const paddedValue = applyPadding(value, maxHexChars, paddingMode);
-            const newBoard = encodePrivateKey(paddedValue, keySize, seed);
-            setBoard(newBoard);
+            setCanonicalKey(paddedValue);
+            setBoard(encodePrivateKey(paddedValue, keySize, seed));
         },
         [maxHexChars, paddingMode, keySize, seed, setBoard]
     );
@@ -76,6 +72,8 @@ export const PrivateKeyInput: FC = () => {
         (e: ChangeEvent<HTMLSelectElement>) => {
             const newSize = Number(e.target.value) as KeySize;
             setKeySize(newSize);
+            // Key size change clears the board in the store; clear canonical key to avoid reseeding stale key.
+            setCanonicalKey('');
         },
         [setKeySize]
     );
@@ -94,15 +92,16 @@ export const PrivateKeyInput: FC = () => {
         const hex = Array.from(bytes)
             .map(b => b.toString(16).padStart(2, '0'))
             .join('');
-        const newBoard = encodePrivateKey(hex, keySize, seed);
-        setBoard(newBoard);
+        setCanonicalKey(hex);
+        setBoard(encodePrivateKey(hex, keySize, seed));
     }, [setBoard, keySize, seed, maxHexChars]);
 
     const clearAll = useCallback(() => {
+        setCanonicalKey('');
         setBoard(encodePrivateKey('', keySize, seed));
     }, [setBoard, keySize, seed]);
 
-    const needsPadding = decodedKey.length > 0 && decodedKey.length < maxHexChars;
+    const needsPadding = displayedKey.length > 0 && displayedKey.length < maxHexChars;
 
     return (
         <div className="private-key-input">
@@ -144,7 +143,7 @@ export const PrivateKeyInput: FC = () => {
                 <input
                     id="pk-input"
                     type="text"
-                    value={decodedKey}
+                    value={displayedKey}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     placeholder={`Enter ${maxHexChars} hex characters...`}
@@ -153,7 +152,7 @@ export const PrivateKeyInput: FC = () => {
                     autoComplete="off"
                 />
                 <div className="input-status">
-                    <span className="char-count">{decodedKey.length}/{maxHexChars}</span>
+                    <span className="char-count">{displayedKey.length}/{maxHexChars}</span>
                     {needsPadding && (
                         <span className="padding-hint">
                             Will pad {paddingMode === 'left' ? 'left' : 'right'} with zeros

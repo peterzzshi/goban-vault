@@ -1,5 +1,6 @@
 import { applyCaptures } from './goRules';
 import { generatePositions } from './positionGenerator';
+import { createSeededRandom } from './rng';
 import { KEY_SIZE_TO_BOARD_SIZE } from '../types';
 
 import type {
@@ -53,16 +54,8 @@ export function encodePrivateKey(
     return applyCaptures(board, boardSize);
 }
 
-function seededRandom(seed: number): () => number {
-    let state = seed || 1;
-    return () => {
-        state = (state * 1103515245 + 12345) & 0x7fffffff;
-        return state / 0x7fffffff;
-    };
-}
-
 function assignStoneColour(row: number, col: number, bitIndex: number, seed: number): StoneType {
-    const random = seededRandom(seed + bitIndex * 31);
+    const random = createSeededRandom(seed + bitIndex * 31);
     const value = random();
 
     const positionBias = (row + col) % 2;

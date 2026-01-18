@@ -1,14 +1,8 @@
-function seededRandom(seed: number): () => number {
-    let state = seed || 1;
-    return () => {
-        state = (state * 1103515245 + 12345) & 0x7fffffff;
-        return state / 0x7fffffff;
-    };
-}
+import { createSeededRandom } from './rng';
 
 function shuffleWithSeed<T>(array: T[], seed: number): T[] {
     const result = [...array];
-    const random = seededRandom(seed);
+    const random = createSeededRandom(seed);
     for (let i = result.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
         const temp = result[i];
@@ -22,23 +16,7 @@ function shuffleWithSeed<T>(array: T[], seed: number): T[] {
 }
 
 export function generatePositions(totalBits: number, totalPositions: number, seed: number): number[] {
-    const boardSize = Math.sqrt(totalPositions);
-    const evenPositions: number[] = [];
-    const oddPositions: number[] = [];
-
-    for (let pos = 0; pos < totalPositions; pos++) {
-        const row = Math.floor(pos / boardSize);
-        const col = pos % boardSize;
-        if ((row + col) % 2 === 0) {
-            evenPositions.push(pos);
-        } else {
-            oddPositions.push(pos);
-        }
-    }
-
-    const shuffledEven = shuffleWithSeed(evenPositions, seed);
-    const shuffledOdd = shuffleWithSeed(oddPositions, seed + 1);
-
-    const combined = [...shuffledEven, ...shuffledOdd];
-    return combined.slice(0, totalBits);
+    const allPositions = Array.from({ length: totalPositions }, (_, index) => index);
+    const shuffled = shuffleWithSeed(allPositions, seed);
+    return shuffled.slice(0, totalBits);
 }
