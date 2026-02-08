@@ -1,59 +1,62 @@
 # Goban Vault
 
-Encode cryptographic keys as natural-looking Go board positions. Keys hide in plain sight as believable game states.
+**Hide your private keys in plain sight.** This tool encodes cryptographic keys as Go board positions that look like ordinary game records.
 
-- **Live app** 🚀 https://peterzzshi.github.io/goban-vault/
-- **What it does** ♟️ convert a hex key into stones on a Go board and back again, with captures and liberties applied automatically.
-- **Who it's for** 🧠 Anyone who wants a memorable, printable, or deniable way to store keys — or just a clean Go game board.
+🚀 **Live app:** https://peterzzshi.github.io/goban-vault/
 
-## Use Cases
+## Why?
 
-- 🧾 **Plausible backup**: A printed or screenshotted board can hold your key without looking like a key.
-- 📜 **Paper/archive storage**: Keep a physical copy that survives digital loss.
-- 🧩 **Visual memory aid**: Remember a pattern instead of a hex string.
-- ⚫ **Go board sandbox**: Edit positions, explore shapes, and see captures auto-apply.
+**The problem:** Storing private keys digitally (cloud, password managers, encrypted files) creates honeypots. Physical backups (paper, metal plates) are obviously valuable if discovered.
 
-## Features
+**The solution:** A printed Go board looks like a game record. Only you know the seed and manual edits needed to recover the key. No one can distinguish it from a casual game screenshot.
 
-- ⛓️ Encode/decode 64/128/256-bit hex keys directly on the board.
-- 🟨 Dynamic board sizes (9×9, 13×13, 19×19) with seeded layouts for realistic positions.
-- 🔁 Real-time two-way sync: typing updates the board; placing/removing stones updates the key.
-- ⚖️ Automatic Go rules: captures remove stones; suicide moves are blocked.
-- 🎨 Mixed black/white stones for a natural look; manual stone colours stay as placed.
-- 🧵 Short keys are padded automatically so encoding/decoding stay reliable.
+**Use cases:**
+- Print/screenshot your key as a game record for physical backup
+- Store it in photo albums, notebooks, or public repositories without attracting attention
+- Split the secret: share the board publicly, keep the seed + mutations private
+- Cross-border travel with keys that don't look like keys
 
-> **How it works** 🧮
-> 1. Paste or type a hex key. The app pads it (if needed) so every bit maps cleanly.
-> 2. Bits are read with the current seed to decide stone order, coordinates, and colour mix.
-> 3. The board renders those stones, applies Go liberties, and updates the key in real time.
-> 4. Manual edits immediately re-encode into the input box, so the board and key always match.
+## Security Model: Seed + Mutations
 
-## Quick Start
+**Two-factor recovery protects your key:**
 
-```bash
-npm install
-npm run dev
-```
-Open the local URL shown in the terminal.
+1. **Seed (memorise this):** Generates the base board from your key deterministically. Same seed + key = same board.
+2. **Manual mutations (owner knowledge):** After encoding, you click to add/remove stones. These changes update the displayed key but are invisible to anyone else. Memorising 3-5 mutations makes brute-force attacks infeasible.
+
+**Recovery:** Enter your seed, place your memorised mutations → original key appears.
+
+**Plausible deniability:** Without knowing your mutations, the board decodes to a different (plausible but wrong) key. An attacker can't prove your actual key exists.
 
 ## How to Use
 
-1. Enter or paste your hex key in the input box (choose 64/128/256 bits).
-2. Pick a board size and seed. The seed controls the reading order and stone colours.
-3. Adjust padding direction if you use shorter keys; padding is applied automatically.
-4. Click the board to add/remove stones. Captures resolve immediately. The key field updates in real time.
-5. Save the board (screenshot/print/export) along with your seed and any manual edits.
+### Encoding a Key
+1. Paste your private key (hex format) into the input field
+2. Choose a memorable seed number (e.g., your birth year or PIN)
+3. The board generates automatically
+4. **Optional:** Click 3-5 positions to add/remove stones (memorise these mutations)
+5. Screenshot or print the board
 
-## Tips for Safe Use
+### Recovering a Key
+1. Open the app and enter your seed
+2. Recreate your memorised mutations by clicking the same positions
+3. Your original key appears in the input field
 
-- 🔒 Memorise your seed and any manual tweaks; you need both to recover the exact key.
-- 🎭 Make the board look like a believable mid-game to avoid suspicion.
-- 🧪 Test recovery before relying on a board as your only backup.
+### Example Workflow
+- Generate a Bitcoin private key → encode with seed `1234` → add stones at `(3,7)`, `(9,2)`, `(15,15)` → print the board
+- To recover: enter seed `1234` → click `(3,7)`, `(9,2)`, `(15,15)` → original key restored
 
-## Licence
+## Running Locally
 
-MIT
+```bash
+npm install && npm run dev
+```
 
----
+## ⚠️ Important
 
-*Experimental tool. Use at your own discretion for key storage.*
+- **Test recovery first.** Never rely on this as your only backup without verifying you can decode it.
+- **Memorize your seed + mutations.** Without them, the board is just a random game.
+- **Not a substitute for hardware wallets** for active funds. Best for long-term cold storage or estate planning.
+
+## License
+
+MIT — Use at your own risk.
