@@ -8,7 +8,7 @@
 
 **The problem:** Storing private keys digitally (cloud, password managers, encrypted files) creates honeypots. Physical backups (paper, metal plates) are obviously valuable if discovered.
 
-**The solution:** A printed Go board looks like a game record. Only you know the seed and manual edits needed to recover the key. No one can distinguish it from a casual game screenshot.
+**The solution:** A printed Go board reads as a game record rather than key material. Only you know the seed and the manual edits needed to recover the key, so the board alone decodes to a different, plausible key.
 
 **Use cases:**
 - Print/screenshot your key as a game record for physical backup
@@ -18,14 +18,14 @@
 
 ## Security Model: Seed + Mutations
 
-**Two-factor recovery protects your key:**
+**Two independent secrets protect your key:**
 
-1. **Seed (memorise this):** Generates the base board from your key deterministically. Same seed + key = same board.
-2. **Manual mutations (owner knowledge):** After encoding, you click to add/remove stones. These changes update the displayed key but are invisible to anyone else. Memorising 3-5 mutations makes brute-force attacks infeasible.
+1. **Seed (memorise this):** Drives the PRNG that maps each key bit to a board intersection. Same seed + key = same board. Encoding is lossless: with the right seed, the base board decodes back to the exact key.
+2. **Manual edits (owner knowledge):** After encoding, you click to add/remove stones, playing under normal Go rules (captures included). These edits change the key the board decodes to. You memorise the edits — and, for any capturing move, the stones it removed — so you can reverse them during recovery.
 
-**Recovery:** Enter your seed, place your memorised mutations → original key appears.
+**Recovery:** Rebuild the board, reverse your memorised edits (restoring any captured stones), then read the decoded key.
 
-**Plausible deniability:** Without knowing your mutations, the board decodes to a different (plausible but wrong) key. An attacker can't prove your actual key exists.
+**Plausible deniability:** Without your edits, the board decodes to a *different but valid-looking* key. For a never-used cold-storage key an attacker cannot tell which decoding is real. Note this is deniability, not a proof of cryptographic hardness: the seed PRNG is not cryptographic, so do not treat the seed alone as strong protection — the memorised edits are what carry the real secret.
 
 ## How to Use
 
@@ -38,18 +38,20 @@
 
 ### Recovering a Key
 1. Open the app and enter your seed
-2. Recreate your memorised mutations by clicking the same positions
+2. Rebuild the memorised board, then reverse your edits by clicking the same positions (and restoring any stones those moves captured)
 3. Your original key appears in the input field
 
 ### Example Workflow
-- Generate a Bitcoin private key → encode with seed `1234` → add stones at `(3,7)`, `(9,2)`, `(15,15)` → print the board
-- To recover: enter seed `1234` → click `(3,7)`, `(9,2)`, `(15,15)` → original key restored
+- Generate a Bitcoin private key → encode with seed `1234` → edit stones at `(3,7)`, `(9,2)`, `(15,15)` → print the board
+- To recover: enter seed `1234` → rebuild the printed board → reverse the edits at `(3,7)`, `(9,2)`, `(15,15)` → original key restored
 
 ## Running Locally
 
 ```bash
 npm install && npm run dev
 ```
+
+Run the encode/decode round-trip tests with `npm test`.
 
 ## ⚠️ Important
 

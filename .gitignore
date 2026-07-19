@@ -9,6 +9,9 @@ dist-ssr
 build
 *.local
 
+# Generated TS declaration files for root config scripts
+*.config.d.ts
+
 # Logs
 logs
 *.log

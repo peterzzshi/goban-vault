@@ -52,51 +52,11 @@
     font-style: italic;
 }
 
-.mode-toggle {
-    width: 100%;
-    padding: 14px;
-    font-size: 14px;
-    font-weight: 600;
-    border: 2px solid var(--color-border-hover);
-    border-radius: 6px;
-    background: var(--color-bg-input);
-    color: var(--color-text-primary);
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.mode-toggle:hover {
-    border-color: var(--color-accent);
-    background: var(--color-border);
-}
-
-.mode-toggle.active {
-    background: var(--color-accent);
-    color: white;
-    border-color: var(--color-accent);
-}
-
-.dummy-options {
-    margin-top: 12px;
-    padding: 12px;
-    background: var(--color-bg-input);
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
 .colour-selector {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-}
-
-.colour-selector label {
-    font-size: 13px;
-    color: var(--color-text-secondary);
-    margin-right: 4px;
 }
 
 .colour-btn {
@@ -138,7 +98,31 @@
     margin: 0;
 }
 
+.revert-btn {
+    width: 100%;
+    margin-bottom: 8px;
+    padding: 10px;
+    border: 1px solid var(--color-accent);
+    border-radius: 4px;
+    background: var(--color-bg-input);
+    color: var(--color-accent-hover);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.revert-btn:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: white;
+}
+
+.revert-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .clear-btn {
+    width: 100%;
     padding: 10px;
     border: 1px solid var(--color-error);
     border-radius: 4px;
@@ -174,8 +158,4 @@
 
 .instructions p:last-child {
     margin-bottom: 0;
-}
-
-.instructions strong {
-    color: var(--color-text-primary);
 }

@@ -1,4 +1,4 @@
-import type { CellState, StoneType } from '../types';
+import type { CellState, PlacedStone, StoneType } from '../types';
 
 interface Position {
     row: number;
@@ -132,36 +132,37 @@ export function wouldBeSuicide(
     return countLiberties(tempBoard, group, boardSize) === 0;
 }
 
-export function applyCaptures(board: CellState[][], boardSize: number): CellState[][] {
-    const newBoard = board.map(r => [...r]);
-    let changed = true;
+function setCell(board: CellState[][], row: number, col: number, value: CellState): void {
+    const target = board[row];
+    if (target) {
+        target[col] = value;
+    }
+}
 
-    while (changed) {
-        changed = false;
-        const visited = new Set<string>();
-
-        for (let row = 0; row < boardSize; row++) {
-            for (let col = 0; col < boardSize; col++) {
-                const stone = newBoard[row]?.[col];
-                if (stone === null) continue;
-
-                const key = `${row}-${col}`;
-                if (visited.has(key)) continue;
-
-                const group = getGroup(newBoard, row, col, visited, boardSize);
-                if (countLiberties(newBoard, group, boardSize) === 0) {
-                    for (const pos of group) {
-                        const boardRow = newBoard[pos.row];
-                        if (boardRow) {
-                            boardRow[pos.col] = null;
-                        }
-                    }
-                    changed = true;
-                }
-            }
-        }
+// Places a stone under Go rules, returning the new board and any captured
+// stones. Returns null for an illegal (non-capturing suicide) move.
+export function placeStoneWithCaptures(
+    board: CellState[][],
+    row: number,
+    col: number,
+    colour: StoneType,
+    boardSize: number
+): { board: CellState[][]; captured: PlacedStone[] } | null {
+    const capturedPositions = wouldCapture(board, row, col, colour, boardSize);
+    if (capturedPositions.length === 0 && wouldBeSuicide(board, row, col, colour, boardSize)) {
+        return null;
     }
 
-    return newBoard;
+    const next = board.map(r => [...r]);
+    const captured: PlacedStone[] = [];
+    for (const { row: r, col: c } of capturedPositions) {
+        const stone = board[r]?.[c];
+        if (stone != null) {
+            captured.push({ row: r, col: c, colour: stone });
+        }
+        setCell(next, r, c, null);
+    }
+    setCell(next, row, col, colour);
+    return { board: next, captured };
 }
 

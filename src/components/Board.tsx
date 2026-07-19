@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, type FC } from 'react';
 
-import { wouldBeSuicide, wouldCapture, applyCaptures } from '../core/goRules';
+import { wouldBeSuicide, wouldCapture } from '../core/goRules';
 import { useGameStore } from '../store';
 
 import type { BoardSize } from '../types';
@@ -22,14 +22,13 @@ const getStarPoints = (boardSize: BoardSize): [number, number][] => {
     }
 };
 
-export const Board: React.FC = () => {
+export const Board: FC = () => {
     const {
         board,
         boardSize,
         editStoneColour,
-        removeStone,
         getStone,
-        setBoard,
+        toggleStone,
     } = useGameStore();
 
     const starPoints = useMemo(() => getStarPoints(boardSize), [boardSize]);
@@ -38,32 +37,6 @@ export const Board: React.FC = () => {
         (row: number, col: number): boolean =>
             starPoints.some(([r, c]) => r === row && c === col),
         [starPoints]
-    );
-
-    const handleIntersectionClick = useCallback(
-        (row: number, col: number) => {
-            const currentStone = getStone(row, col);
-
-            if (currentStone !== null) {
-                removeStone(row, col);
-            } else {
-                const suicide = wouldBeSuicide(board, row, col, editStoneColour, boardSize);
-                const captures = wouldCapture(board, row, col, editStoneColour, boardSize);
-
-                if (suicide && captures.length === 0) {
-                    return;
-                }
-
-                const newBoard = board.map(r => [...r]);
-                const boardRow = newBoard[row];
-                if (boardRow) {
-                    boardRow[col] = editStoneColour;
-                }
-                const boardWithCaptures = applyCaptures(newBoard, boardSize);
-                setBoard(boardWithCaptures);
-            }
-        },
-        [board, boardSize, editStoneColour, removeStone, getStone, setBoard]
     );
 
     const validationErrors = useMemo(() => {
@@ -96,7 +69,7 @@ export const Board: React.FC = () => {
                             <div
                                 key={col}
                                 className={`intersection ${validationError ? 'invalid-hover' : ''}`}
-                                onClick={() => handleIntersectionClick(row, col)}
+                                onClick={() => { toggleStone(row, col); }}
                                 title={validationError}
                             >
                                 <div className="grid-lines">

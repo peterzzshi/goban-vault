@@ -8,7 +8,7 @@ import type { Linter } from 'eslint';
 
 const config: Linter.Config[] = [
   {
-    ignores: ['dist/**', 'node_modules/**'],
+    ignores: ['dist/**', 'node_modules/**', '**/*.config.d.ts'],
   },
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,

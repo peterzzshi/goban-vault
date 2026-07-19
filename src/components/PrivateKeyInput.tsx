@@ -44,6 +44,12 @@ export const PrivateKeyInput: FC = () => {
     const [canonicalKey, setCanonicalKey] = useState<string>('');
 
     const displayedKey = canonicalKey || decodedFromBoard;
+
+    const hasStones = useMemo(
+        () => board.some(row => row.some(cell => cell !== null)),
+        [board]
+    );
+    const editsDivergeFromKey = canonicalKey !== '' && hasStones && decodedFromBoard !== canonicalKey;
     useEffect(() => {
         if (!canonicalKey) return;
         setBoard(encodePrivateKey(canonicalKey, keySize, seed));
@@ -72,7 +78,7 @@ export const PrivateKeyInput: FC = () => {
         (e: ChangeEvent<HTMLSelectElement>) => {
             const newSize = Number(e.target.value) as KeySize;
             setKeySize(newSize);
-            // Key size change clears the board in the store; clear canonical key to avoid reseeding stale key.
+            // Board is cleared by the store; drop the stale key too.
             setCanonicalKey('');
         },
         [setKeySize]
@@ -160,6 +166,18 @@ export const PrivateKeyInput: FC = () => {
                     )}
                 </div>
             </div>
+
+            {canonicalKey !== '' && hasStones && (
+                <div className={`board-decode-readout ${editsDivergeFromKey ? 'diverged' : 'matched'}`}>
+                    <span className="readout-label">Board decodes to</span>
+                    <code className="readout-value">{decodedFromBoard}</code>
+                    <span className="readout-note">
+                        {editsDivergeFromKey
+                            ? 'Differs from your key — these edits are your second secret. Memorise them to reverse and recover the key.'
+                            : 'Matches your key — a faithful encoding. Edit stones to add your second secret.'}
+                    </span>
+                </div>
+            )}
 
             <div className="button-group">
                 <button onClick={generateRandom} className="btn-generate">

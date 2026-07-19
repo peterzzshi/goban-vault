@@ -12,6 +12,8 @@ export const BoardControls: FC = () => {
         seed,
         setSeed,
         board,
+        editLog,
+        revertEdits,
     } = useGameStore();
 
     const stoneCount = board.flat().filter((s): s is StoneType => s !== null).length;
@@ -66,6 +68,14 @@ export const BoardControls: FC = () => {
                 </p>
 
                 <button
+                    onClick={revertEdits}
+                    className="revert-btn"
+                    disabled={editLog.length === 0}
+                >
+                    Reveal original key ({editLog.length} edit{editLog.length === 1 ? '' : 's'})
+                </button>
+
+                <button
                     onClick={clearBoard}
                     className="clear-btn"
                     disabled={stoneCount === 0}
@@ -77,7 +87,8 @@ export const BoardControls: FC = () => {
             <div className="control-section instructions">
                 <p>Click empty positions to place stones.</p>
                 <p>Click existing stones to remove them.</p>
-                <p>The key updates automatically as you edit.</p>
+                <p>Editing stones changes the key the board decodes to.</p>
+                <p>Memorise your edits — reversing them recovers the original key.</p>
             </div>
         </div>
     );

@@ -1,4 +1,3 @@
-import { applyCaptures } from './goRules';
 import { generatePositions } from './positionGenerator';
 import { createSeededRandom } from './rng';
 import { KEY_SIZE_TO_BOARD_SIZE } from '../types';
@@ -46,22 +45,19 @@ export function encodePrivateKey(
             const col = posIndex % boardSize;
             const boardRow = board[row];
             if (boardRow) {
-                boardRow[col] = assignStoneColour(row, col, bit, seed);
+                boardRow[col] = assignStoneColour(bit, seed);
             }
         }
     }
 
-    return applyCaptures(board, boardSize);
+    // Lossless: no captures, so decodeBoard recovers any key exactly.
+    return board;
 }
 
-function assignStoneColour(row: number, col: number, bitIndex: number, seed: number): StoneType {
+// Cosmetic only — decoding reads presence/absence, never colour.
+function assignStoneColour(bitIndex: number, seed: number): StoneType {
     const random = createSeededRandom(seed + bitIndex * 31);
-    const value = random();
-
-    const positionBias = (row + col) % 2;
-    const threshold = 0.5 + (positionBias === 0 ? 0.1 : -0.1);
-
-    return value < threshold ? 'black' : 'white';
+    return random() < 0.5 ? 'black' : 'white';
 }
 
 export function decodeBoard(
