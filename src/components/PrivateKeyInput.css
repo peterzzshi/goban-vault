@@ -78,6 +78,14 @@
     box-shadow: 0 0 0 2px rgba(106, 159, 217, 0.3);
 }
 
+.input-group input.input-error {
+    border-color: var(--color-error);
+}
+
+.input-group input.input-error:focus {
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
 .input-status {
     display: flex;
     justify-content: space-between;
@@ -88,6 +96,12 @@
 .char-count {
     font-size: 11px;
     color: var(--color-text-muted);
+}
+
+.error-message {
+    font-size: 11px;
+    color: var(--color-error);
+    font-weight: 500;
 }
 
 .padding-hint {

@@ -25,3 +25,8 @@ Single-page React app that encodes private keys as Go board positions. Lossless,
 
 - Do not commit changes automatically
 - Present changes for manual review before committing
+- Update `SESSION-HANDOFF.md` after completing each task with:
+  - What changed (files modified, features added/removed)
+  - Why (design rationale, security considerations)
+  - Test status (new tests added, coverage expanded)
+  - Pending decisions or deferred work
