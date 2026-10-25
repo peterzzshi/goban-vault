@@ -1,0 +1,126 @@
+.mnemonic-input {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.125rem;
+    background: var(--color-bg-card);
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.input-group > label {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 0.9rem;
+}
+
+.word-grid {
+    display: grid;
+    gap: 0.5rem;
+    /* Columns size to their content; the grid itself may be wider than the card. */
+    justify-content: start;
+}
+
+.word-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.word-index {
+    flex: 0 0 auto;
+    min-width: 1.4rem;
+    text-align: right;
+    font-family: var(--font-mono), sans-serif;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.word-cell input {
+    /* `flex: 0 0 auto` so the `size` attribute is authoritative — flexing would
+       let the box shrink below its content and clip the word. */
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--color-border-hover);
+    border-radius: 6px;
+    font-family: var(--font-mono), sans-serif;
+    font-size: 0.85rem;
+    background: var(--color-bg-input);
+    color: var(--color-text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    /* The `size` attribute drives the width, so padding must not be added on top
+       of it — otherwise long words get clipped instead of showing in full. */
+    box-sizing: content-box;
+}
+
+.word-cell input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.word-cell input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(106, 159, 217, 0.3);
+}
+
+.word-cell input.input-error {
+    border-color: var(--color-error);
+    background: rgba(154, 74, 74, 0.15);
+}
+
+.word-cell input.input-error:focus {
+    box-shadow: 0 0 0 2px rgba(154, 74, 74, 0.35);
+}
+
+.input-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.word-count {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    font-family: var(--font-mono), sans-serif;
+}
+
+.error-message {
+    color: var(--color-error);
+    font-weight: 500;
+    text-align: right;
+}
+
+.edit-note {
+    margin: 0;
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid var(--color-warning);
+    background: rgba(223, 175, 79, 0.1);
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+/* Narrow screens: let the grid scroll rather than clip words. */
+@media (max-width: 700px) {
+    .word-grid {
+        grid-template-columns: repeat(2, max-content) !important;
+    }
+
+    .mnemonic-input {
+        overflow-x: auto;
+    }
+}
+

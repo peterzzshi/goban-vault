@@ -1,19 +1,18 @@
-import { useCallback, useEffect, useMemo, useState, type FC, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle, type ChangeEvent, type KeyboardEvent } from 'react';
 
 import { encodePrivateKey, decodeBoard } from '../core/encoder';
 import { validatePrivateKey } from '../core/validation';
 import { useGameStore } from '../store';
 
-import type { KeySize } from '../types';
 import { KEY_CHAIN_CONFIGS } from '../types';
+import type { InputComponentRef } from '../App';
 import './PrivateKeyInput.css';
 
-export const PrivateKeyInput: FC = () => {
+export const PrivateKeyInput = forwardRef<InputComponentRef>((_, ref) => {
     const {
         board,
         setBoard,
         keySize,
-        setKeySize,
         seed,
     } = useGameStore();
 
@@ -25,8 +24,7 @@ export const PrivateKeyInput: FC = () => {
     const [inputValue, setInputValue] = useState<string>('');
     const [canonicalKey, setCanonicalKey] = useState<string>('');
     const [validationError, setValidationError] = useState<string>('');
-
-    const displayedKey = canonicalKey || decodedFromBoard;
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const hasStones = useMemo(
         () => board.some(row => row.some(cell => cell !== null)),
@@ -34,13 +32,37 @@ export const PrivateKeyInput: FC = () => {
     );
     const editsDivergeFromKey = canonicalKey !== '' && hasStones && decodedFromBoard !== canonicalKey;
 
+    // The textarea shows the entered key while typing, then the board's decode
+    // once the board is the source of truth.
+    const shownValue = inputValue || decodedFromBoard;
+
+    useLayoutEffect(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+    }, [shownValue]);
+
     useEffect(() => {
         if (!canonicalKey) return;
         setBoard(encodePrivateKey(canonicalKey, keySize, seed));
     }, [seed, canonicalKey, keySize, setBoard]);
 
+    useEffect(() => {
+        setCanonicalKey('');
+        setInputValue('');
+        setValidationError('');
+    }, [keySize]);
+
+    // When board changes externally and differs from canonical key, clear inputValue to show decoded board
+    useEffect(() => {
+        if (canonicalKey && decodedFromBoard !== canonicalKey && inputValue) {
+            setInputValue('');
+        }
+    }, [decodedFromBoard, canonicalKey, inputValue]);
+
     const handleInputChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
+        (e: ChangeEvent<HTMLTextAreaElement>) => {
             const raw = e.target.value.toLowerCase();
             setInputValue(raw);
             setValidationError('');
@@ -61,23 +83,12 @@ export const PrivateKeyInput: FC = () => {
     );
 
     const handleKeyDown = useCallback(
-        (e: KeyboardEvent<HTMLInputElement>) => {
+        (e: KeyboardEvent<HTMLTextAreaElement>) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 e.currentTarget.blur();
             }
-        },
-        []
-    );
-
-    const handleKeySizeChange = useCallback(
-        (e: ChangeEvent<HTMLSelectElement>) => {
-            const newSize = Number(e.target.value) as KeySize;
-            setKeySize(newSize);
-            setCanonicalKey('');
-            setInputValue('');
-            setValidationError('');
-        },
-        [setKeySize]
+        }
     );
 
     const generateRandom = useCallback(() => {
@@ -100,68 +111,41 @@ export const PrivateKeyInput: FC = () => {
         setBoard(encodePrivateKey('', keySize, seed));
     }, [setBoard, keySize, seed]);
 
+    useImperativeHandle(ref, () => ({
+        generateRandom,
+        clearAll,
+    }), [generateRandom, clearAll]);
+
     return (
         <div className="private-key-input">
-            <div className="key-config-row">
-                <div className="config-group">
-                    <label htmlFor="key-size">Key Size</label>
-                    <select
-                        id="key-size"
-                        value={keySize}
-                        onChange={handleKeySizeChange}
-                        className="config-select"
-                    >
-                        {KEY_CHAIN_CONFIGS.map(opt => (
-                            <option key={opt.size} value={opt.size}>
-                                {opt.label} ({opt.hexChars} hex) — {opt.chains}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
             <div className="input-group">
                 <label htmlFor="pk-input">Private Key (Hex)</label>
-                <input
+                <textarea
                     id="pk-input"
-                    type="text"
-                    value={inputValue || displayedKey}
+                    ref={textareaRef}
+                    value={shownValue}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     placeholder={`Enter exactly ${maxHexChars} hex characters...`}
                     spellCheck={false}
                     autoComplete="off"
+                    rows={1}
                     className={validationError ? 'input-error' : ''}
                 />
                 <div className="input-status">
-                    <span className="char-count">{(inputValue || displayedKey).length}/{maxHexChars}</span>
+                    <span className="char-count">{shownValue.length}/{maxHexChars}</span>
                     {validationError && (
                         <span className="error-message">⚠️ {validationError}</span>
                     )}
                 </div>
             </div>
 
-            {canonicalKey !== '' && hasStones && (
-                <div className={`board-decode-readout ${editsDivergeFromKey ? 'diverged' : 'matched'}`}>
-                    <span className="readout-label">Board decodes to</span>
-                    <code className="readout-value">{decodedFromBoard}</code>
-                    <span className="readout-note">
-                        {editsDivergeFromKey
-                            ? '⚠️ Differs from your key — these edits are your second secret. Memorise them to reverse and recover the key.'
-                            : '✓ Matches your key. Edit stones to add your second secret (click positions to mutate the board).'}
-                    </span>
-                </div>
+            {editsDivergeFromKey && (
+                <p className="edit-note">
+                    ⚠️ Board edits changed the decoded key — memorize your edits to recover the original.
+                </p>
             )}
-
-            <div className="button-group">
-                <button onClick={generateRandom} className="btn-generate">
-                    🎲 Generate Random
-                </button>
-                <button onClick={clearAll} className="btn-clear">
-                    🗑️ Clear
-                </button>
-            </div>
 
         </div>
     );
-};
+});

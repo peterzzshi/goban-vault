@@ -14,14 +14,14 @@ Digital storage (cloud, password managers) creates honeypots. Physical backups (
 - Split the secret: share the board publicly, keep seed + edits private
 - Cross-border travel with keys that don't look like keys
 
-**Supported:** Bitcoin, Ethereum, Solana (256-bit), plus 128-bit and 64-bit keys.
+**Supported:** Bitcoin, Ethereum, Solana (256-bit), plus 128-bit and 64-bit keys. Enter a key as hex or as a BIP39 mnemonic phrase — board size (9×9 / 13×13 / 19×19) scales with key size.
 
 ## Security Model
 
 **Two secrets protect your key:**
 
-1. **Seed (memorize):** Drives the PRNG that maps key bits → board positions. Same seed + key = same board. Lossless: with the right seed, decode recovers the exact key.
-2. **Manual edits (owner knowledge):** After encoding, click to add/remove stones following Go rules (captures included). These edits change what the board decodes to. You memorize the edits so you can reverse them during recovery.
+1. **Seed (memorize):** A number that drives the PRNG mapping key bits → board positions. Same seed + key = same board. Lossless: with the right seed, decode recovers the exact key.
+2. **Manual edits (owner knowledge):** Click to add/remove stones after encoding, following Go rules (captures included). These edits change what the board decodes to. You memorize the edits so you can reverse them during recovery.
 
 **Recovery:** Rebuild the board, reverse your edits (restore any captured stones), then read the decoded key.
 
@@ -30,8 +30,8 @@ Digital storage (cloud, password managers) creates honeypots. Physical backups (
 ## How to Use
 
 ### Encoding
-1. Select key size (64/128/256-bit)
-2. Paste your private key (hex)
+1. Select the key size (64/128/256-bit)
+2. Enter your private key (hex) or mnemonic phrase, or click **Generate Random**
 3. Enter a memorable seed (e.g., birth year)
 4. Board generates automatically
 5. **Optional:** Click 3–5 positions to add/remove stones (memorize these)
@@ -39,12 +39,8 @@ Digital storage (cloud, password managers) creates honeypots. Physical backups (
 
 ### Recovery
 1. Enter your seed
-2. Rebuild the board, reverse your edits (click same positions, restore captured stones)
-3. Original key appears
-
-### Example
-Generate Bitcoin key → encode with seed `1234` → edit at `(3,7)`, `(9,2)`, `(15,15)` → print board  
-Recover: seed `1234` → rebuild → reverse edits → key restored
+2. Rebuild the board, reverse your edits (click the same positions, restore captured stones)
+3. Original key or mnemonic appears
 
 ## Running Locally
 
@@ -52,7 +48,7 @@ Recover: seed `1234` → rebuild → reverse edits → key restored
 bun install && bun run dev
 ```
 
-Run tests: `bun test`
+Run tests: `bun run test`
 
 ## ⚠️ Important
 

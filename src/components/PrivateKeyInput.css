@@ -2,51 +2,17 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 16px;
+    padding: 18px;
     background: var(--color-bg-card);
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px solid var(--color-border);
-}
-
-.key-config-row {
-    display: flex;
-    gap: 12px;
-}
-
-.config-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.config-group label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.config-select {
-    padding: 8px 10px;
-    border: 1px solid var(--color-border-hover);
-    border-radius: 4px;
-    font-size: 12px;
-    background: var(--color-bg-input);
-    color: var(--color-text-primary);
-    cursor: pointer;
-}
-
-.config-select:focus {
-    outline: none;
-    border-color: var(--color-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
 .input-group label {
@@ -55,34 +21,42 @@
     color: var(--color-text-primary);
 }
 
-.input-group input {
+.input-group textarea {
     width: 100%;
     padding: 12px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-family: var(--font-mono), sans-serif;
     font-size: 14px;
-    letter-spacing: 1px;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
     border: 1px solid var(--color-border-hover);
-    border-radius: 4px;
+    border-radius: 6px;
     box-sizing: border-box;
     background: var(--color-bg-input);
     color: #fff;
+    resize: none;
+    overflow: hidden;
+    word-break: break-all;
+    white-space: pre-wrap;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.input-group input::placeholder {
+.input-group textarea::placeholder {
     color: var(--color-text-muted);
+    font-family: 'Inter', sans-serif;
+    letter-spacing: normal;
 }
 
-.input-group input:focus {
+.input-group textarea:focus {
     outline: none;
     border-color: var(--color-accent);
     box-shadow: 0 0 0 2px rgba(106, 159, 217, 0.3);
 }
 
-.input-group input.input-error {
+.input-group textarea.input-error {
     border-color: var(--color-error);
 }
 
-.input-group input.input-error:focus {
+.input-group textarea.input-error:focus {
     box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
 }
 
@@ -96,6 +70,7 @@
 .char-count {
     font-size: 11px;
     color: var(--color-text-muted);
+    font-family: var(--font-mono), sans-serif;
 }
 
 .error-message {
@@ -110,75 +85,14 @@
     font-style: italic;
 }
 
-.board-decode-readout {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.edit-note {
+    margin: 0;
     padding: 10px 12px;
-    border-radius: 4px;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg-input);
-}
-
-.board-decode-readout.diverged {
-    border-color: var(--color-warning);
-}
-
-.board-decode-readout.matched {
-    border-color: var(--color-success);
-}
-
-.readout-label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-text-muted);
-}
-
-.readout-value {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    border-radius: 6px;
+    border-left: 4px solid var(--color-warning);
+    background: rgba(223, 175, 79, 0.1);
     font-size: 12px;
-    word-break: break-all;
-    color: var(--color-text-primary);
-}
-
-.readout-note {
-    font-size: 11px;
     color: var(--color-text-secondary);
-}
-
-.button-group {
-    display: flex;
-    gap: 8px;
-}
-
-.button-group button {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-weight: 500;
-}
-
-.btn-generate {
-    background: var(--color-accent);
-    color: white;
-}
-
-.btn-generate:hover {
-    background: var(--color-accent-hover);
-}
-
-.btn-clear {
-    background: var(--color-border);
-    color: var(--color-text-primary);
-}
-
-.btn-clear:hover {
-    background: var(--color-border-hover);
+    line-height: 1.4;
 }
 
