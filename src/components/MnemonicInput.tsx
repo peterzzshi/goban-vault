@@ -1,17 +1,19 @@
-    import { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle, type ChangeEvent, type KeyboardEvent } from 'react';
+import * as bip39 from 'bip39';
 
 import { encodePrivateKey, decodeBoard } from '../core/encoder';
 import {
     mnemonicToHex,
     hexToMnemonic,
     generateMnemonic,
-    isMnemonicWord,
     KEY_SIZE_TO_MNEMONIC_WORDS,
 } from '../core/mnemonic';
 import { useGameStore } from '../store';
 import type { InputComponentRef } from '../App';
 
 import './MnemonicInput.css';
+
+const WORDLIST = bip39.wordlists.english as string[];
 
 const GRID_COLUMNS: Record<number, number> = {
     12: 3,
@@ -110,7 +112,7 @@ export const MnemonicInput = forwardRef<InputComponentRef>((_, ref) => {
             return;
         }
 
-        const badWord = trimmed.find(word => word.length > 0 && !isMnemonicWord(word));
+        const badWord = trimmed.find(word => word.length > 0 && !WORDLIST.includes(word.toLowerCase()));
         if (badWord) {
             setDraftHex('');
             setError(`Unknown word: ${badWord}`);
@@ -245,7 +247,7 @@ export const MnemonicInput = forwardRef<InputComponentRef>((_, ref) => {
                 >
                     {Array.from({ length: expectedWords }, (_, index) => {
                         const value = displayWords[index] ?? '';
-                        const invalid = value.trim().length > 0 && !isMnemonicWord(value.trim());
+                        const invalid = value.trim().length > 0 && !WORDLIST.includes(value.trim().toLowerCase());
                         return (
                             <div className="word-cell" key={index}>
                                 <label className="word-index" htmlFor={`mnemonic-word-${index}`}>

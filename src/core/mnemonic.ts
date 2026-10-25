@@ -23,12 +23,6 @@ export const KEY_SIZE_TO_MNEMONIC_WORDS: Record<KeySize, number> = {
     256: 24,
 };
 
-const WORDLIST = bip39.wordlists.english;
-
-export function isMnemonicWord(word: string): boolean {
-    return WORDLIST.includes(word.toLowerCase());
-}
-
 // Lowercase and treat commas/whitespace as word separators.
 export function normalizeMnemonicInput(input: string): string {
     return input

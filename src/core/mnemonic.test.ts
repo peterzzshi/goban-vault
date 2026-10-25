@@ -5,7 +5,6 @@ import {
     hexToMnemonic,
     generateMnemonic,
     validateMnemonicWords,
-    isMnemonicWord,
     normalizeMnemonicInput,
     splitMnemonicWords,
     KEY_SIZE_TO_MNEMONIC_WORDS,
@@ -223,22 +222,6 @@ describe('mnemonic', () => {
 
                 expect(bip39.validateMnemonic(mnemonic)).toBe(true);
             }
-        });
-    });
-
-    describe('isMnemonicWord', () => {
-        it('accepts words from the wordlist', () => {
-            expect(isMnemonicWord('abandon')).toBe(true);
-            expect(isMnemonicWord('about')).toBe(true);
-        });
-
-        it('rejects unknown words', () => {
-            expect(isMnemonicWord('zzzz')).toBe(false);
-            expect(isMnemonicWord('')).toBe(false);
-        });
-
-        it('is case-insensitive', () => {
-            expect(isMnemonicWord('ABANDON')).toBe(true);
         });
     });
 

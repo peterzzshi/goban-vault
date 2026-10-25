@@ -88,7 +88,8 @@ export const PrivateKeyInput = forwardRef<InputComponentRef>((_, ref) => {
                 e.preventDefault();
                 e.currentTarget.blur();
             }
-        }
+        },
+        []
     );
 
     const generateRandom = useCallback(() => {
